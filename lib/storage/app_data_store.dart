@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Simple encrypted JSON data store for Lakhaan.
 ///
@@ -270,7 +271,7 @@ class AppDataStore {
   // Basic AES key (32 bytes). In a real app, manage this securely.
   // IMPORTANT: length must be 16/24/32 bytes; this is exactly 32.
   static final encrypt.Key _baseKey = encrypt.Key.fromUtf8(
-    'lakhaan-app-secret-key-32-bytes!', // 32 chars
+    dotenv.env['APP_SECRET_KEY'] ?? 'lakhaan-app-secret-key-32-bytes!', // 32 chars
   );
 
   late final encrypt.Encrypter _encrypter = encrypt.Encrypter(
