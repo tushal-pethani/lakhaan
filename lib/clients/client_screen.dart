@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:convert';
 import '../navbar/navbar.dart';
 import '../storage/app_data_store.dart';
@@ -53,11 +52,11 @@ class GstLookupService {
     final cleanGst = gstNumber.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '');
     if (cleanGst.length != 15) return null;
     
-    final apiKey = dotenv.isInitialized ? dotenv.env['X_API_KEY'] : null;
-    final apiSecret = dotenv.isInitialized ? dotenv.env['X_API_SECRET'] : null;
+    final apiKey = const String.fromEnvironment('X_API_KEY', defaultValue: '');
+    final apiSecret = const String.fromEnvironment('X_API_SECRET', defaultValue: '');
     
-    if (apiKey == null || apiSecret == null) {
-      debugPrint('Missing API keys in .env');
+    if (apiKey.isEmpty || apiSecret.isEmpty) {
+      debugPrint('Missing API keys in Dart define');
       return null;
     }
 
