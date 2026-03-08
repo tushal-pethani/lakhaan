@@ -48,76 +48,37 @@ class GstLookupService {
     '37': 'Andhra Pradesh (New)',
   };
 
+  // The Vercel serverless proxy URL — keeps API keys off the client.
+  static const String _proxyUrl =
+      'https://gst-proxy-three.vercel.app/api/verify-gst';
+
   static Future<Map<String, String>?> fetchGstDetails(String gstNumber) async {
     final cleanGst = gstNumber.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '');
     if (cleanGst.length != 15) return null;
-    
-    final apiKey = const String.fromEnvironment('X_API_KEY', defaultValue: '');
-    final apiSecret = const String.fromEnvironment('X_API_SECRET', defaultValue: '');
-    
-    if (apiKey.isEmpty || apiSecret.isEmpty) {
-      debugPrint('Missing API keys in Dart define');
-      return null;
-    }
 
     try {
-      // 1. Authenticate to get access_token
-      final authResponse = await http.post(
-        Uri.parse('https://cors-anywhere.herokuapp.com/https://api.sandbox.co.in/authenticate'),
-        headers: {
-          'x-api-key': apiKey,
-          'x-api-secret': apiSecret,
-        },
+      final response = await http.post(
+        Uri.parse(_proxyUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'gstin': cleanGst}),
       );
 
-      if (authResponse.statusCode != 200) {
-        debugPrint('Auth failed: ${authResponse.body}');
-        return null;
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        if (data['success'] == true) {
+          return {
+            'name': data['name']?.toString() ?? '',
+            'address': data['address']?.toString() ?? '',
+            'city': data['city']?.toString() ?? '',
+            'state': data['state']?.toString() ?? '',
+            'pincode': data['pincode']?.toString() ?? '',
+            'phone': data['phone']?.toString() ?? '',
+            'email': data['email']?.toString() ?? '',
+          };
+        }
       }
-      
-      final authData = jsonDecode(authResponse.body);
-      final accessToken = authData['data']['access_token'];
-
-      // 2. Fetch GST Details
-      final gstResponse = await http.post(
-        Uri.parse('https://cors-anywhere.herokuapp.com/https://api.sandbox.co.in/gst/compliance/public/gstin/search'),
-        headers: {
-          'Authorization': accessToken,
-          'Content-Type': 'application/json',
-          'x-accept-cache': 'false',
-          'x-api-key': apiKey,
-          'x-api-version': '1.0.0',
-        },
-        body: jsonEncode({
-          'gstin': cleanGst,
-        }),
-      );
-
-      final gstData = jsonDecode(gstResponse.body);
-      
-      if (gstResponse.statusCode == 200 && gstData['code'] == 200) {
-        final data = gstData['data']['data'];
-        
-        final businessName = data['lgnm'] ?? data['tradeNam'] ?? '';
-        final addressObj = data['pradr']?['addr'] ?? {};
-        
-        final building = addressObj['bno'] ?? '';
-        final street = addressObj['flno'] ?? '';
-        final address = [building, street].where((e) => e.toString().isNotEmpty).join(', ');
-        
-        return {
-          'name': businessName.toString(),
-          'address': address,
-          'city': addressObj['dst']?.toString() ?? '',
-          'state': addressObj['stcd']?.toString() ?? '',
-          'pincode': addressObj['pncd']?.toString() ?? '',
-          'phone': '',
-          'email': '',
-        };
-      } else {
-        debugPrint('GST fetch failed: ${gstData['message'] ?? gstResponse.body}');
-        return null;
-      }
+      debugPrint('GST proxy failed [${response.statusCode}]: ${response.body}');
+      return null;
     } catch (e) {
       debugPrint('Exception during GST fetch: $e');
       return null;

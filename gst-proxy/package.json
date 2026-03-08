@@ -1,0 +1,9 @@
+{
+  "name": "gst-proxy",
+  "version": "1.0.0",
+  "description": "Serverless proxy for GST verification API",
+  "private": true,
+  "dependencies": {
+    "node-fetch": "^2.7.0"
+  }
+}
