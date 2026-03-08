@@ -3,7 +3,9 @@ import 'dart:io';
 
 import 'package:billings/dashboard/dashboard_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
 
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -114,18 +116,35 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  static const String _gstProxyUrl =
+      'https://gst-proxy-three.vercel.app/api/verify-gst';
+
   Future<Map<String, String>> _verifyGstApi(String gst) async {
-    // TODO: Replace with your real GST API call.
-    await Future.delayed(const Duration(seconds: 1));
-    // Simulate some data:
-    return {
-      'businessName': 'Sample Business Pvt. Ltd.',
-      'address': '123, Sample Street',
-      'stateName': 'Maharashtra',
-      'city': 'Mumbai',
-      'pincode': '400001',
-      'phone': '9876543210',
-    };
+    final cleanGst = gst.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '');
+    try {
+      final response = await http.post(
+        Uri.parse(_gstProxyUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'gstin': cleanGst}),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        if (data['success'] == true) {
+          return {
+            'businessName': data['name']?.toString() ?? '',
+            'address': data['address']?.toString() ?? '',
+            'stateName': data['state']?.toString() ?? '',
+            'city': data['city']?.toString() ?? '',
+            'pincode': data['pincode']?.toString() ?? '',
+            'phone': data['phone']?.toString() ?? '',
+          };
+        }
+      }
+      throw Exception('GST not found (${response.statusCode})');
+    } catch (e) {
+      debugPrint('GST verify error: $e');
+      rethrow;
+    }
   }
 
   Future<void> _verifyGst() async {
