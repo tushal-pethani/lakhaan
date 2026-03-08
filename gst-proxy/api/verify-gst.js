@@ -1,5 +1,19 @@
 const fetch = require("node-fetch");
 
+// Only allow requests from our Firebase Hosting domain (and localhost for local dev)
+const ALLOWED_ORIGINS = [
+  "https://billings-app-77b3e.web.app",
+  "https://billings-app-77b3e.firebaseapp.com",
+  "http://localhost",
+  "http://localhost:8080",
+  "http://localhost:5000",
+];
+
+function isOriginAllowed(origin) {
+  if (!origin) return false;
+  return ALLOWED_ORIGINS.some((allowed) => origin.startsWith(allowed));
+}
+
 /**
  * Vercel Serverless Function: /api/verify-gst
  *
@@ -11,10 +25,17 @@ const fetch = require("node-fetch");
  * Response: { success, name, address, city, state, pincode }
  */
 module.exports = async function handler(req, res) {
-  // Set CORS headers to allow requests from our Firebase Hosting domain
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  const origin = req.headers["origin"] || "";
+
+  // Block requests from unknown origins
+  if (!isOriginAllowed(origin)) {
+    return res.status(403).json({ error: "Forbidden: origin not allowed." });
+  }
+
+  // Set CORS headers — only echo back the allowed origin, not *
+  res.setHeader("Access-Control-Allow-Origin", origin);
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   // Handle CORS preflight request
   if (req.method === "OPTIONS") {
