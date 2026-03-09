@@ -258,6 +258,7 @@ Future<InvoiceFormResult?> showInvoiceFormDialog(
                                               .toList(),
                                           (v) => setState(() => clientId = v ?? ''),
                                           required: true,
+                                          hint: 'Select Client',
                                         ),
                                       ),
                                       const SizedBox(width: 12),
@@ -431,6 +432,8 @@ Future<InvoiceFormResult?> showInvoiceFormDialog(
                                                     () => items[i].description = v,
                                                   ),
                                                   flex: 3,
+                                                  highlight: true,
+                                                  placeholder: 'Enter item description',
                                                 ),
                                                 _tableInput(
                                                   items[i].id + '_qty',
@@ -766,6 +769,8 @@ Widget _tableInput(
   Function(String) onChanged, {
   double flex = 1,
   TextInputType? keyboardType,
+  bool highlight = false,
+  String? placeholder,
 }) => Expanded(
   flex: (flex * 10).toInt(),
   child: Padding(
@@ -775,21 +780,30 @@ Widget _tableInput(
       initialValue: value,
       onChanged: onChanged,
       keyboardType: keyboardType,
-      style: const TextStyle(fontSize: 12),
-      textAlign: TextAlign.center,
+      style: TextStyle(
+        fontSize: 12,
+        fontWeight: highlight ? FontWeight.w600 : FontWeight.normal,
+      ),
+      textAlign: highlight ? TextAlign.left : TextAlign.center,
       decoration: InputDecoration(
         isDense: true,
+        hintText: placeholder,
+        hintStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.normal),
         contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
         enabledBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.transparent),
+          borderSide: BorderSide(
+            color: highlight ? Colors.blueAccent.withOpacity(0.3) : Colors.transparent,
+          ),
           borderRadius: BorderRadius.circular(6),
         ),
         focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.transparent),
+          borderSide: BorderSide(
+            color: highlight ? Colors.blueAccent : Colors.transparent,
+          ),
           borderRadius: BorderRadius.circular(6),
         ),
         filled: true,
-        fillColor: Colors.transparent,
+        fillColor: highlight ? Colors.blueAccent.withOpacity(0.04) : Colors.transparent,
       ),
     ),
   ),
@@ -842,6 +856,7 @@ Widget _buildDropdown(
   List<DropdownMenuItem<String>> items,
   Function(String?) onChanged, {
   bool required = false,
+  String? hint,
 }) => Column(
   crossAxisAlignment: CrossAxisAlignment.start,
   children: [
@@ -856,6 +871,7 @@ Widget _buildDropdown(
           vertical: 12,
         ),
       ),
+      hint: hint != null ? Text(hint, style: TextStyle(color: theme.hintColor)) : null,
       items: items,
       onChanged: onChanged,
       validator: required

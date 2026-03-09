@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:printing/printing.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../invoices/create_invoice_form.dart';
 import '../invoices/invoice_preview_screen.dart';
@@ -571,6 +572,61 @@ class _DashboardScreenState extends State<DashboardScreen> {
     await file.writeAsBytes(pdfBytes, flush: true);
   }
 
+  Future<void> _shareOnWhatsApp(Invoice inv) async {
+    final client = _getClient(inv.clientId);
+    if (client == null) return;
+
+    final phone = client.phone.trim();
+    if (phone.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No phone number found for this client. Please add one in the Clients section.'),
+        ),
+      );
+      return;
+    }
+
+    // Generate and trigger PDF download first
+    final data = _buildPrintData(inv);
+    final pdfBytes = await InvoiceThemeRenderer.buildPdf(data);
+    final filename = 'invoice-${inv.billNo}.pdf';
+    await Printing.sharePdf(bytes: pdfBytes, filename: filename);
+
+    // Clean phone — remove spaces and dashes, add country code if missing
+    String cleanPhone = phone.replaceAll(RegExp(r'[\s\-\(\)]'), '');
+    if (!cleanPhone.startsWith('+')) {
+      cleanPhone = '+91$cleanPhone'; // Default to India
+    }
+
+    final profile = AppDataStore.instance.profile;
+    final companyName = profile?.businessName.isNotEmpty == true
+        ? profile!.businessName
+        : (profile?.name ?? 'Our Company');
+    final dateStr = '${inv.date.day.toString().padLeft(2, '0')}/${inv.date.month.toString().padLeft(2, '0')}/${inv.date.year}';
+
+    final message = 'Hello ${client.name},\n\n'
+        'Please find your invoice details below:\n\n'
+        '📄 Invoice No: ${inv.billNo}\n'
+        '📅 Date: $dateStr\n'
+        '💰 Amount: ₹${inv.totalAmount.toStringAsFixed(2)}\n\n'
+        'From: $companyName\n\n'
+        'Thank you for your business!';
+
+    final whatsappUrl = Uri.parse(
+      'https://wa.me/${cleanPhone.replaceAll('+', '')}?text=${Uri.encodeComponent(message)}',
+    );
+
+    if (await canLaunchUrl(whatsappUrl)) {
+      await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
+    } else {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open WhatsApp')),
+      );
+    }
+  }
+
   List<Invoice> get _filteredInvoices {
     final searchLower = _search.toLowerCase();
 
@@ -1011,6 +1067,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         icon: const Icon(Icons.print_outlined, size: 20),
                         color: theme.hintColor,
                         onPressed: () => _onPreviewInvoice(inv),
+                      ),
+                      IconButton(
+                        tooltip: 'Share on WhatsApp',
+                        icon: const Icon(Icons.share, size: 20),
+                        color: const Color(0xFF25D366), // WhatsApp green
+                        onPressed: () => _shareOnWhatsApp(inv),
                       ),
                       IconButton(
                         tooltip: 'Delete',
