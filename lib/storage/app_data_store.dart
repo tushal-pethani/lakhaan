@@ -194,6 +194,7 @@ class StoredProfile {
   String? accountNumber;
   String? ifscCode;
   String? companyLogoBase64;
+  String? hsnNumber;
 
   StoredProfile({
     required this.name,
@@ -210,6 +211,7 @@ class StoredProfile {
     this.accountNumber,
     this.ifscCode,
     this.companyLogoBase64,
+    this.hsnNumber,
   });
 
   Map<String, dynamic> toJson() => {
@@ -227,6 +229,7 @@ class StoredProfile {
     'accountNumber': accountNumber,
     'ifscCode': ifscCode,
     'companyLogoBase64': companyLogoBase64,
+    'hsnNumber': hsnNumber,
   };
 
   factory StoredProfile.fromJson(Map<String, dynamic> json) {
@@ -245,6 +248,7 @@ class StoredProfile {
       accountNumber: json['accountNumber'] as String?,
       ifscCode: json['ifscCode'] as String?,
       companyLogoBase64: json['companyLogoBase64'] as String?,
+      hsnNumber: json['hsnNumber'] as String?,
     );
   }
 }

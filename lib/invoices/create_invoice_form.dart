@@ -24,7 +24,8 @@ class InvoiceFormItem {
     this.discount = 0,
     this.tax = 0,
   }) : id = id ?? Uuid().v4();
-  double get amount => (quantity * rate) - (discount ?? 0) + (tax ?? 0);
+  double get discountAmount => (quantity * rate) * (discount / 100);
+  double get amount => (quantity * rate) - discountAmount + (tax ?? 0);
 }
 
 class InvoiceFormResult {
@@ -113,7 +114,7 @@ Future<InvoiceFormResult?> showInvoiceFormDialog(
   double subtotal() =>
       items.fold(0, (sum, item) => sum + (item.quantity * item.rate));
   double totalDiscount() =>
-      items.fold(0, (sum, item) => sum + (item.discount ?? 0));
+      items.fold(0, (sum, item) => sum + item.discountAmount);
   double totalTax() => items.fold(0, (sum, item) => sum + (item.tax ?? 0));
   double cgstAmount() => subtotal() * cgstRate / 100;
   double sgstAmount() => subtotal() * sgstRate / 100;
@@ -401,7 +402,7 @@ Future<InvoiceFormResult?> showInvoiceFormDialog(
                                               _tableHeader('Qty', flex: 1),
                                               _tableHeader('Unit', flex: 1),
                                               _tableHeader('Rate (Rs.)', flex: 1.2),
-                                              _tableHeader('Disc. (Rs.)', flex: 1),
+                                              _tableHeader('Disc. (%)', flex: 1),
                                               _tableHeader('Tax (Rs.)', flex: 1),
                                               _tableHeader('Amount', flex: 1.2),
                                               const SizedBox(width: 40),

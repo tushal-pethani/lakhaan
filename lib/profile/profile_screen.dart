@@ -25,6 +25,7 @@ Future<void> showProfileDialog(BuildContext context) async {
   String accountNumber = profile?.accountNumber ?? '';
   String ifscCode = profile?.ifscCode ?? '';
   String? companyLogoBase64 = profile?.companyLogoBase64;
+  String hsnNumber = profile?.hsnNumber ?? '';
 
   final formKey = GlobalKey<FormState>();
   bool loading = false;
@@ -290,6 +291,15 @@ Future<void> showProfileDialog(BuildContext context) async {
                               Icons.business_outlined,
                               businessName,
                               (v) => businessName = v,
+                              enabled: false,
+                            ),
+                            const SizedBox(height: 12),
+                            _buildInputField(
+                              'HSN Number',
+                              Icons.tag,
+                              hsnNumber,
+                              (v) => hsnNumber = v,
+                              hint: 'e.g., 6204',
                             ),
                             const SizedBox(height: 12),
                             _buildInputField(
@@ -297,7 +307,7 @@ Future<void> showProfileDialog(BuildContext context) async {
                               Icons.location_on_outlined,
                               address,
                               (v) => address = v,
-                              maxLines: 2,
+                              maxLines: 4,
                             ),
                             const SizedBox(height: 12),
                             Row(
@@ -434,6 +444,7 @@ Future<void> showProfileDialog(BuildContext context) async {
                                           accountNumber: accountNumber,
                                           ifscCode: ifscCode,
                                           companyLogoBase64: companyLogoBase64,
+                                          hsnNumber: hsnNumber.isEmpty ? null : hsnNumber,
                                         );
                                     if (kIsWeb) {
                                       await FirestoreService.instance.saveProfile({
@@ -451,6 +462,7 @@ Future<void> showProfileDialog(BuildContext context) async {
                                         'accountNumber': accountNumber,
                                         'ifscCode': ifscCode,
                                         'companyLogoBase64': companyLogoBase64,
+                                        'hsnNumber': hsnNumber.isEmpty ? null : hsnNumber,
                                       });
                                     }
                                     await AppDataStore.instance.saveProfile();

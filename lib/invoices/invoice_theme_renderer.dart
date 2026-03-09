@@ -56,6 +56,7 @@ class InvoicePrintCompany {
   final String? accountNumber;
   final String? ifscCode;
   final Uint8List? logo;
+  final String? hsnNumber;
 
   InvoicePrintCompany({
     required this.name,
@@ -68,6 +69,7 @@ class InvoicePrintCompany {
     this.accountNumber,
     this.ifscCode,
     this.logo,
+    this.hsnNumber,
   });
 }
 
@@ -312,32 +314,43 @@ class InvoiceThemeRenderer {
                     fontSize: 18,
                   ),
                 ),
-                pw.SizedBox(height: 4),
-                pw.Text(
-                  '${data.company.address}, ${data.company.city}',
-                  style: pw.TextStyle(
-                    color: themeColors.headerText,
-                    fontSize: 10,
+                if (data.company.address.isNotEmpty || data.company.city.isNotEmpty) ...[
+                  pw.SizedBox(height: 4),
+                  pw.Text(
+                    [data.company.address, data.company.city].where((s) => s.isNotEmpty).join(', '),
+                    style: pw.TextStyle(
+                      color: themeColors.headerText,
+                      fontSize: 10,
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
           pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.end,
             children: [
-              pw.Text(
-                'GST: ${data.company.gstNumber}',
-                style: pw.TextStyle(
-                  color: themeColors.headerText,
-                  fontSize: 10,
-                  fontWeight: pw.FontWeight.bold,
+              if (data.company.gstNumber.isNotEmpty)
+                pw.Text(
+                  'GST: ${data.company.gstNumber}',
+                  style: pw.TextStyle(
+                    color: themeColors.headerText,
+                    fontSize: 10,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
                 ),
-              ),
               if (data.company.panNumber != null &&
                   data.company.panNumber!.isNotEmpty)
                 pw.Text(
                   'PAN: ${data.company.panNumber}',
+                  style: pw.TextStyle(
+                    color: themeColors.headerText,
+                    fontSize: 10,
+                  ),
+                ),
+              if (data.company.contact.isNotEmpty)
+                pw.Text(
+                  'Ph: ${data.company.contact}',
                   style: pw.TextStyle(
                     color: themeColors.headerText,
                     fontSize: 10,
@@ -355,16 +368,18 @@ class InvoiceThemeRenderer {
     InvoicePrintData data,
     _ThemeColors themeColors,
   ) {
+    final hasHsn = data.company.hsnNumber != null && data.company.hsnNumber!.isNotEmpty;
     return pw.Table(
       columnWidths: {
         0: const pw.FixedColumnWidth(30),
         1: const pw.FlexColumnWidth(),
-        2: const pw.FixedColumnWidth(40),
-        3: const pw.FixedColumnWidth(50),
-        4: const pw.FixedColumnWidth(60),
-        5: const pw.FixedColumnWidth(55),
-        6: const pw.FixedColumnWidth(55),
-        7: const pw.FixedColumnWidth(70),
+        if (hasHsn) 2: const pw.FixedColumnWidth(55),
+        (hasHsn ? 3 : 2): const pw.FixedColumnWidth(40),
+        (hasHsn ? 4 : 3): const pw.FixedColumnWidth(50),
+        (hasHsn ? 5 : 4): const pw.FixedColumnWidth(60),
+        (hasHsn ? 6 : 5): const pw.FixedColumnWidth(55),
+        (hasHsn ? 7 : 6): const pw.FixedColumnWidth(55),
+        (hasHsn ? 8 : 7): const pw.FixedColumnWidth(70),
       },
       children: [
         pw.TableRow(
@@ -389,6 +404,16 @@ class InvoiceThemeRenderer {
                 bottom: pw.BorderSide(color: themeColors.border, width: 0.5),
               ),
             ),
+            if (hasHsn)
+              _tableCell(
+                'HSN',
+                themeColors.tableHeaderText,
+                pw.TextAlign.center,
+                border: pw.Border(
+                  top: pw.BorderSide(color: themeColors.border, width: 0.5),
+                  bottom: pw.BorderSide(color: themeColors.border, width: 0.5),
+                ),
+              ),
             _tableCell(
               'Qty',
               themeColors.tableHeaderText,
@@ -471,6 +496,13 @@ class InvoiceThemeRenderer {
                 pw.TextAlign.left,
                 border: verticalBorder,
               ),
+              if (hasHsn)
+                _tableCell(
+                  hasItem ? (data.company.hsnNumber ?? '') : '',
+                  PdfColors.black,
+                  pw.TextAlign.center,
+                  border: verticalBorder,
+                ),
               _tableCell(
                 hasItem ? '${item!.quantity}' : '',
                 PdfColors.black,
@@ -739,30 +771,36 @@ class InvoiceThemeRenderer {
                     fontSize: 11,
                   ),
                 ),
-                pw.SizedBox(height: 2),
-                pw.Text(
-                  data.client.address,
-                  style: const pw.TextStyle(fontSize: 9),
-                ),
-                pw.Text(
-                  '${data.client.city}, ${data.client.state} - ${data.client.pincode}',
-                  style: const pw.TextStyle(fontSize: 9),
-                ),
-                pw.SizedBox(height: 4),
-                pw.Text(
-                  'GST: ${data.client.gstNumber}',
-                  style: const pw.TextStyle(fontSize: 9),
-                ),
+                if (data.client.address.isNotEmpty) ...[
+                  pw.SizedBox(height: 2),
+                  pw.Text(
+                    data.client.address,
+                    style: const pw.TextStyle(fontSize: 9),
+                  ),
+                ],
+                if (data.client.city.isNotEmpty || data.client.state.isNotEmpty || data.client.pincode.isNotEmpty)
+                  pw.Text(
+                    [data.client.city, data.client.state, data.client.pincode].where((s) => s.isNotEmpty).join(', '),
+                    style: const pw.TextStyle(fontSize: 9),
+                  ),
+                if (data.client.gstNumber.isNotEmpty) ...[
+                  pw.SizedBox(height: 4),
+                  pw.Text(
+                    'GST: ${data.client.gstNumber}',
+                    style: const pw.TextStyle(fontSize: 9),
+                  ),
+                ],
                 if (data.client.panNumber != null &&
                     data.client.panNumber!.isNotEmpty)
                   pw.Text(
                     'PAN: ${data.client.panNumber}',
                     style: const pw.TextStyle(fontSize: 9),
                   ),
-                pw.Text(
-                  'Ph: ${data.client.phone}',
-                  style: const pw.TextStyle(fontSize: 9),
-                ),
+                if (data.client.phone.isNotEmpty)
+                  pw.Text(
+                    'Ph: ${data.client.phone}',
+                    style: const pw.TextStyle(fontSize: 9),
+                  ),
               ],
             ),
           ),

@@ -381,7 +381,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
     final discount = result.items.fold<double>(
       0,
-      (sum, item) => sum + (item.discount ?? 0),
+      (sum, item) => sum + item.discountAmount,
     );
     final itemTax = result.items.fold<double>(
       0,
@@ -538,6 +538,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         logo: profile?.companyLogoBase64 != null
             ? base64Decode(profile!.companyLogoBase64!)
             : null,
+        hsnNumber: profile?.hsnNumber,
       ),
       termsAndConditions: inv.termsAndConditions,
     );
