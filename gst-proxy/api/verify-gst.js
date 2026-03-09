@@ -102,19 +102,28 @@ module.exports = async function handler(req, res) {
 
     if (gstResponse.ok && gstData?.code === 200) {
       const data = gstData?.data?.data ?? {};
-      const businessName = data.lgnm ?? data.tradeNam ?? "";
+      const businessName = data.tradeNam || data.lgnm || "";
       const addressObj = data.pradr?.addr ?? {};
-      const address = [addressObj.bno, addressObj.flno]
-        .filter(Boolean)
-        .join(", ");
+
+      // Build full address from parts:
+      // flno (Floor/Flat) → bno (Building No) → bnm (Building Name) → st (Street) → loc (Locality)
+      const addressParts = [
+        addressObj.flno,  // Floor / Flat number
+        addressObj.bno,   // Building number
+        addressObj.bnm,   // Building name
+        addressObj.st,    // Street
+        addressObj.loc,   // Locality
+      ].filter((part) => part && part.trim() !== "");
+
+      const fullAddress = addressParts.join(", ");
 
       return res.status(200).json({
         success: true,
         name: businessName,
-        address,
-        city: addressObj.dst ?? "",
-        state: addressObj.stcd ?? "",
-        pincode: addressObj.pncd ?? "",
+        address: fullAddress,
+        city: addressObj.dst || "",      // District / City
+        state: addressObj.stcd || "",    // State code name
+        pincode: addressObj.pncd || "",  // Pincode
         phone: "",
         email: "",
       });
