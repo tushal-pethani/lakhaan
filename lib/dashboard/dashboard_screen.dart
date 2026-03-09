@@ -268,9 +268,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
             .map((c) => InvoiceFormClient(id: c.id, name: c.name))
             .toList();
 
+    // Compute next sequential invoice number
+    int maxNum = 0;
+    for (final inv in _invoices) {
+      final match = RegExp(r'INV-(\d+)').firstMatch(inv.billNo);
+      if (match != null) {
+        final n = int.tryParse(match.group(1)!) ?? 0;
+        if (n > maxNum) maxNum = n;
+      }
+    }
+    final nextBillNo = 'INV-${maxNum + 1}';
+
     final result = await showInvoiceFormDialog(
       context,
       clients: clientsList,
+      initialBillNo: nextBillNo,
     );
 
     if (result == null) return;

@@ -86,7 +86,7 @@ Future<InvoiceFormResult?> showInvoiceFormDialog(
   String clientId = initialClientId ?? '';
   String billNo =
       initialBillNo ??
-      'INV-${DateTime.now().year}-${DateTime.now().millisecondsSinceEpoch % 1000}';
+      'INV-1';
   DateTime date = initialDate ?? DateTime.now();
   String chNo = initialChNo ?? '';
   List<InvoiceFormItem> items = initialItems != null && initialItems.isNotEmpty
