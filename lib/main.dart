@@ -13,8 +13,11 @@ import 'login/login_screen.dart';
 import 'services/firestore_service.dart';
 import 'storage/app_data_store.dart';
 import 'theme/app_theme.dart';
+import 'invoices/public_invoice_screen.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 
 Future<void> main() async {
+  usePathUrlStrategy();
   WidgetsFlutterBinding.ensureInitialized();
 
   if (!kIsWeb && (Platform.isMacOS || Platform.isWindows || Platform.isLinux)) {
@@ -70,8 +73,25 @@ class MyApp extends StatelessWidget {
           themeMode: mode,
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
-          home: const _AuthGate(),
+          initialRoute: '/',
+          onGenerateRoute: (settings) {
+            // Handle /invoice/:userId/:invoiceId
+            if (settings.name != null && settings.name!.startsWith('/invoice/')) {
+              final segments = settings.name!.split('/');
+              // segments will be ['', 'invoice', 'userId', 'invoiceId']
+              if (segments.length >= 4) {
+                final userId = segments[2];
+                final invoiceId = segments[3];
+                return MaterialPageRoute(
+                  builder: (context) => PublicInvoiceScreen(userId: userId, invoiceId: invoiceId),
+                  settings: settings,
+                );
+              }
+            }
+            return null; // Let standard routes handle everything else
+          },
           routes: {
+            '/': (_) => const _AuthGate(),
             '/clients': (_) => const ClientsScreen(),
             '/dashboard': (_) => const DashboardScreen(),
           },
@@ -101,47 +121,49 @@ class _AuthGateState extends State<_AuthGate> {
     if (_initializedEmailKey == key) return;
     if (_initializingStore) return;
 
-    // Skip on web since storage is not available
-    if (kIsWeb) {
-      // Load profile from Firestore on web
-      final profileData = await FirestoreService.instance.getProfile();
-      if (profileData != null) {
-        AppDataStore.instance.profile = StoredProfile(
-          name: profileData['name'] as String? ?? '',
-          email: profileData['email'] as String? ?? email,
-          businessName: profileData['name'] as String? ?? 'Business',
-          address: profileData['address'] as String? ?? '',
-          city: profileData['city'] as String? ?? '',
-          state: profileData['state'] as String? ?? '',
-          pincode: profileData['pincode'] as String? ?? '',
-          phone: profileData['phone'] as String? ?? '',
-          gstNumber: profileData['gstNumber'] as String? ?? '',
-          panNumber: profileData['panNumber'] as String?,
-          bankName: profileData['bankName'] as String?,
-          accountNumber: profileData['accountNumber'] as String?,
-          ifscCode: profileData['ifscCode'] as String?,
-          companyLogoBase64: profileData['companyLogoBase64'] as String?,
-        );
-      }
+    Future.microtask(() async {
+      if (!mounted) return;
+      setState(() => _initializingStore = true);
       
-      if (mounted) {
-        setState(() => _initializedEmailKey = key);
+      // Load profile from Firestore on all platforms
+      try {
+        final profileData = await FirestoreService.instance.getProfile();
+        if (profileData != null) {
+          AppDataStore.instance.profile = StoredProfile(
+            name: profileData['name'] as String? ?? '',
+            email: profileData['email'] as String? ?? email,
+            businessName: profileData['name'] as String? ?? 'Business',
+            address: profileData['address'] as String? ?? '',
+            city: profileData['city'] as String? ?? '',
+            state: profileData['state'] as String? ?? '',
+            pincode: profileData['pincode'] as String? ?? '',
+            phone: profileData['phone'] as String? ?? '',
+            gstNumber: profileData['gstNumber'] as String? ?? '',
+            panNumber: profileData['panNumber'] as String?,
+            bankName: profileData['bankName'] as String?,
+            accountNumber: profileData['accountNumber'] as String?,
+            ifscCode: profileData['ifscCode'] as String?,
+            companyLogoBase64: profileData['companyLogoBase64'] as String?,
+          );
+        }
+      } catch (e) {
+        debugPrint('Failed to load profile from Firestore: $e');
       }
-      return;
-    }
 
-    setState(() => _initializingStore = true);
-    await AppDataStore.instance.init(key);
-    AppTheme.themeMode.value =
-        AppDataStore.instance.settings.themeMode == 'dark'
-            ? ThemeMode.dark
-            : ThemeMode.light;
-    if (mounted) {
-      setState(() {
-        _initializedEmailKey = key;
-        _initializingStore = false;
-      });
-    }
+      await AppDataStore.instance.init(key);
+      
+      AppTheme.themeMode.value =
+          AppDataStore.instance.settings.themeMode == 'dark'
+              ? ThemeMode.dark
+              : ThemeMode.light;
+              
+      if (mounted) {
+        setState(() {
+          _initializedEmailKey = key;
+          _initializingStore = false;
+        });
+      }
+    });
   }
 
   @override

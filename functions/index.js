@@ -116,3 +116,68 @@ exports.verifyGst = onCall({ cors: true }, async (request) => {
     throw new HttpsError("internal", "An unexpected error occurred.");
   }
 });
+
+/**
+ * Firebase Cloud Function: sendInvoiceSms
+ *
+ * Sends an SMS to the client with a link to their invoice.
+ * Requires an SMS provider like Twilio to be configured via environment variables.
+ */
+exports.sendInvoiceSms = onCall({ cors: true }, async (request) => {
+  // Ensure the user is authenticated before allowing the call
+  if (!request.auth) {
+    throw new HttpsError(
+      "unauthenticated",
+      "You must be logged in to send an SMS."
+    );
+  }
+
+  const phone = request.data?.phone;
+  const message = request.data?.message;
+
+  if (!phone || typeof phone !== "string" || phone.trim() === "") {
+    throw new HttpsError(
+      "invalid-argument",
+      "A valid destination phone number is required."
+    );
+  }
+
+  if (!message || typeof message !== "string" || message.trim() === "") {
+    throw new HttpsError(
+      "invalid-argument",
+      "An SMS message body is required."
+    );
+  }
+
+  // Provider configuration (defaults to Twilio placeholder)
+  const TWILIO_SID = process.env.TWILIO_SID;
+  const TWILIO_AUTH = process.env.TWILIO_AUTH;
+  const TWILIO_FROM = process.env.TWILIO_FROM; // Server sender number
+
+  if (!TWILIO_SID || !TWILIO_AUTH || !TWILIO_FROM) {
+    // Return success in the stub so the UI doesn't crash while the dev sets up a provider.
+    console.warn("SMS requested but Twilio credentials are not configured.");
+    console.log(`\n[STUB] Would have sent SMS to ${phone}:\n${message}\n`);
+    
+    return { 
+      success: true, 
+      stub: true,
+      message: "SMS provider not configured (logged to server console instead)." 
+    }; 
+  }
+
+  try {
+    const twilio = require("twilio")(TWILIO_SID, TWILIO_AUTH);
+    const response = await twilio.messages.create({
+      body: message,
+      from: TWILIO_FROM,
+      to: phone,
+    });
+    
+    console.log(`Successfully sent SMS via Twilio using SID: ${response.sid}`);
+    return { success: true, messageId: response.sid };
+  } catch (e) {
+    console.error("SMS sending failed:", e);
+    throw new HttpsError("internal", "Failed to send SMS via provider.");
+  }
+});

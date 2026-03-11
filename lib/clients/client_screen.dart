@@ -131,15 +131,13 @@ class _ClientsScreenState extends State<ClientsScreen> {
   @override
   void initState() {
     super.initState();
-    if (kIsWeb) {
-      _loadClientsFromFirestore();
-    } else {
-      _loadClientsFromStore();
-    }
+    _loadClientsFromStore();
+    _loadClientsFromFirestore();
   }
 
   Future<void> _loadClientsFromFirestore() async {
     final clients = await FirestoreService.instance.getClients();
+    if (!mounted) return;
     setState(() {
       _clients.clear();
       _clients.addAll(clients.map((c) => Client(
@@ -182,24 +180,6 @@ class _ClientsScreenState extends State<ClientsScreen> {
   }
 
   Future<void> _persistClients() async {
-    if (kIsWeb) {
-      // On web, sync with Firestore
-      for (final client in _clients) {
-        await FirestoreService.instance.updateClient(client.id, {
-          'name': client.name,
-          'gstNumber': client.gstNumber,
-          'panNumber': client.panNumber,
-          'address': client.address,
-          'city': client.city,
-          'state': client.state,
-          'pincode': client.pincode,
-          'phone': client.phone,
-          'email': client.email,
-        });
-      }
-      return;
-    }
-
     AppDataStore.instance.clients = _clients
         .map(
           (c) => StoredClient(
@@ -758,7 +738,8 @@ class _ClientsScreenState extends State<ClientsScreen> {
     bool isNewClient = editing == null;
 
     // On web, save to Firestore first to get ID
-    if (kIsWeb && isNewClient) {
+    
+    if (isNewClient) {
       final clientId = await FirestoreService.instance.addClient({
         'name': result.name,
         'gstNumber': result.gstNumber,
@@ -783,27 +764,31 @@ class _ClientsScreenState extends State<ClientsScreen> {
         email: result.email,
       );
       setState(() => _clients.add(updatedClient));
-      return;
-    }
-
-    setState(() {
-      if (isNewClient) {
-        _clients.add(result);
-      } else {
+    } else {
+      await FirestoreService.instance.updateClient(editing!.id, {
+        'name': result.name,
+        'gstNumber': result.gstNumber,
+        'panNumber': result.panNumber,
+        'address': result.address,
+        'city': result.city,
+        'state': result.state,
+        'pincode': result.pincode,
+        'phone': result.phone,
+        'email': result.email,
+      });
+      setState(() {
         final index = _clients.indexWhere((c) => c.id == editing.id);
         if (index != -1) _clients[index] = result;
-      }
-    });
+      });
+    }
     await _persistClients();
+
   }
 
   void _deleteClient(Client client) {
     setState(() => _clients.removeWhere((c) => c.id == client.id));
-    if (kIsWeb) {
-      FirestoreService.instance.deleteClient(client.id);
-    } else {
-      _persistClients();
-    }
+    FirestoreService.instance.deleteClient(client.id);
+    _persistClients();
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(const SnackBar(content: Text('Client deleted')));

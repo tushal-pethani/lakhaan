@@ -282,7 +282,7 @@ class AppDataStore {
   );
 
   Directory? _baseDir;
-  late final String _username;
+  late String _username;
 
   Directory get baseDir {
     if (_baseDir == null) {

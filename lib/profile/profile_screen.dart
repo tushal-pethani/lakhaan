@@ -446,25 +446,23 @@ Future<void> showProfileDialog(BuildContext context) async {
                                           companyLogoBase64: companyLogoBase64,
                                           hsnNumber: hsnNumber.isEmpty ? null : hsnNumber,
                                         );
-                                    if (kIsWeb) {
-                                      await FirestoreService.instance.saveProfile({
-                                        'name': name,
-                                        'email': email,
-                                        'businessName': businessName,
-                                        'address': address,
-                                        'city': city,
-                                        'state': state,
-                                        'pincode': pincode,
-                                        'phone': phone,
-                                        'gstNumber': gstNumber,
-                                        'panNumber': panNumber.isEmpty ? null : panNumber,
-                                        'bankName': bankName,
-                                        'accountNumber': accountNumber,
-                                        'ifscCode': ifscCode,
-                                        'companyLogoBase64': companyLogoBase64,
-                                        'hsnNumber': hsnNumber.isEmpty ? null : hsnNumber,
-                                      });
-                                    }
+                                    await FirestoreService.instance.saveProfile({
+                                      'name': name,
+                                      'email': email,
+                                      'businessName': businessName,
+                                      'address': address,
+                                      'city': city,
+                                      'state': state,
+                                      'pincode': pincode,
+                                      'phone': phone,
+                                      'gstNumber': gstNumber,
+                                      'panNumber': panNumber.isEmpty ? null : panNumber,
+                                      'bankName': bankName,
+                                      'accountNumber': accountNumber,
+                                      'ifscCode': ifscCode,
+                                      'companyLogoBase64': companyLogoBase64,
+                                      'hsnNumber': hsnNumber.isEmpty ? null : hsnNumber,
+                                    });
                                     await AppDataStore.instance.saveProfile();
                                     setState(() => loading = false);
                                     if (ctx.mounted) {

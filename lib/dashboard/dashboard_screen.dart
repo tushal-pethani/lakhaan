@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:printing/printing.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:http/http.dart' as http;
 
 import '../invoices/create_invoice_form.dart';
 import '../invoices/invoice_preview_screen.dart';
@@ -74,11 +75,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
-    if (kIsWeb) {
-      _loadInvoicesFromFirestore();
-    } else {
-      _loadInvoicesFromStore();
-    }
+    _loadInvoicesFromStore();
+    _loadInvoicesFromFirestore();
   }
 
   Future<void> _loadInvoicesFromFirestore() async {
@@ -99,6 +97,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       email: c['email'] as String? ?? '',
     )).toList();
 
+    if (!mounted) return;
     setState(() {
       _invoices.clear();
       _invoices.addAll(invoices.map((inv) {
@@ -169,33 +168,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _persistInvoices() async {
-    if (kIsWeb) {
-      for (final inv in _invoices) {
-        await FirestoreService.instance.updateInvoice(inv.id, {
-          'billNo': inv.billNo,
-          'clientId': inv.clientId,
-          'date': inv.date.toIso8601String(),
-          'totalAmount': inv.totalAmount,
-          'status': inv.status,
-          'theme': inv.theme,
-          'chNo': inv.chNo,
-          'termsAndConditions': inv.termsAndConditions,
-          'items': inv.items?.map((item) => {
-            'description': item.description,
-            'quantity': item.quantity,
-            'unit': item.unit,
-            'rate': item.rate,
-            'discount': item.discount,
-            'tax': item.tax,
-          }).toList(),
-          'cgstRate': inv.cgstRate,
-          'sgstRate': inv.sgstRate,
-          'igstRate': inv.igstRate,
-        });
-      }
-      return;
-    }
-
     AppDataStore.instance.invoices = _invoices
         .map(
           (inv) => StoredInvoice(
@@ -237,11 +209,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     setState(() {
       _invoices.removeWhere((inv) => inv.id == id);
     });
-    if (kIsWeb) {
-      FirestoreService.instance.deleteInvoice(id);
-    } else {
-      _persistInvoices();
-    }
+    FirestoreService.instance.deleteInvoice(id);
+    _persistInvoices();
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(const SnackBar(content: Text('Invoice deleted')));
@@ -252,6 +221,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final inv = _invoices.firstWhere((i) => i.id == id);
       inv.status = newStatus;
     });
+    FirestoreService.instance.updateInvoice(id, {'status': newStatus});
     _persistInvoices();
     ScaffoldMessenger.of(
       context,
@@ -260,12 +230,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _onNewInvoice() async {
     // On web, load clients from Firestore
-    final clientsList = kIsWeb 
-        ? (await FirestoreService.instance.getClients())
+    final clientsList = (await FirestoreService.instance.getClients())
             .map((c) => InvoiceFormClient(id: c['id'] as String, name: c['name'] as String))
-            .toList()
-        : AppDataStore.instance.clients
-            .map((c) => InvoiceFormClient(id: c.id, name: c.name))
             .toList();
 
     // Compute next sequential invoice number
@@ -296,56 +262,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final igstAmount = subtotal * result.igstRate / 100;
     final totalAmount = subtotal + cgstAmount + sgstAmount + igstAmount;
 
-    String invoiceId;
-    if (kIsWeb) {
-      // Save to Firestore first to get ID
-      invoiceId = await FirestoreService.instance.addInvoice({
-        'billNo': result.billNo,
-        'clientId': result.clientId,
-        'date': result.date.toIso8601String(),
-        'totalAmount': totalAmount,
-        'status': 'draft',
-        'items': result.items.map((item) => {
-          'description': item.description,
-          'quantity': item.quantity,
-          'unit': item.unit,
-          'rate': item.rate,
-          'discount': item.discount,
-          'tax': item.tax,
-        }).toList(),
-        'cgstRate': result.cgstRate,
-        'sgstRate': result.sgstRate,
-        'igstRate': result.igstRate,
-        'theme': result.theme,
-        'chNo': result.chNo,
-        'termsAndConditions': result.termsAndConditions,
-      });
-      setState(() {
-        _invoices.add(
-          Invoice(
-            id: invoiceId,
-            billNo: result.billNo,
-            clientId: result.clientId,
-            date: result.date,
-            totalAmount: totalAmount,
-            status: 'draft',
-            items: result.items,
-            cgstRate: result.cgstRate,
-            sgstRate: result.sgstRate,
-            igstRate: result.igstRate,
-            theme: result.theme,
-            chNo: result.chNo,
-            termsAndConditions: result.termsAndConditions,
-          ),
-        );
-      });
-      return;
-    }
+    // Save to Firestore first to get ID
+    final invoiceId = await FirestoreService.instance.addInvoice({
+      'billNo': result.billNo,
+      'clientId': result.clientId,
+      'date': result.date.toIso8601String(),
+      'totalAmount': totalAmount,
+      'status': 'draft',
+      'items': result.items.map((item) => {
+        'description': item.description,
+        'quantity': item.quantity,
+        'unit': item.unit,
+        'rate': item.rate,
+        'discount': item.discount,
+        'tax': item.tax,
+      }).toList(),
+      'cgstRate': result.cgstRate,
+      'sgstRate': result.sgstRate,
+      'igstRate': result.igstRate,
+      'theme': result.theme,
+      'chNo': result.chNo,
+      'termsAndConditions': result.termsAndConditions,
+    });
 
     setState(() {
       _invoices.add(
         Invoice(
-          id: DateTime.now().microsecondsSinceEpoch.toString(),
+          id: invoiceId,
           billNo: result.billNo,
           clientId: result.clientId,
           date: result.date,
@@ -356,6 +299,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           sgstRate: result.sgstRate,
           igstRate: result.igstRate,
           theme: result.theme,
+          chNo: result.chNo,
+          termsAndConditions: result.termsAndConditions,
         ),
       );
     });
@@ -405,6 +350,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final igstAmount = subtotal * result.igstRate / 100;
     final totalAmount =
         subtotal - discount + itemTax + cgstAmount + sgstAmount + igstAmount;
+
+    await FirestoreService.instance.updateInvoice(inv.id, {
+      'billNo': result.billNo,
+      'clientId': result.clientId,
+      'date': result.date.toIso8601String(),
+      'totalAmount': totalAmount,
+      'items': result.items.map((item) => {
+        'description': item.description,
+        'quantity': item.quantity,
+        'unit': item.unit,
+        'rate': item.rate,
+        'discount': item.discount,
+        'tax': item.tax,
+      }).toList(),
+      'cgstRate': result.cgstRate,
+      'sgstRate': result.sgstRate,
+      'igstRate': result.igstRate,
+      'theme': result.theme,
+      'chNo': result.chNo,
+      'termsAndConditions': result.termsAndConditions,
+    });
 
     setState(() {
       inv.billNo = result.billNo;
@@ -584,7 +550,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     await file.writeAsBytes(pdfBytes, flush: true);
   }
 
-  Future<void> _shareOnWhatsApp(Invoice inv) async {
+  Future<void> _shareViaSMS(Invoice inv) async {
     final client = _getClient(inv.clientId);
     if (client == null) return;
 
@@ -599,42 +565,75 @@ class _DashboardScreenState extends State<DashboardScreen> {
       return;
     }
 
-    // Generate and trigger PDF download first
-    final data = _buildPrintData(inv);
-    final pdfBytes = await InvoiceThemeRenderer.buildPdf(data);
-    final filename = 'invoice-${inv.billNo}.pdf';
-    await Printing.sharePdf(bytes: pdfBytes, filename: filename);
-
-    // Clean phone — remove spaces and dashes, add country code if missing
-    String cleanPhone = phone.replaceAll(RegExp(r'[\s\-\(\)]'), '');
-    if (!cleanPhone.startsWith('+')) {
-      cleanPhone = '+91$cleanPhone'; // Default to India
-    }
-
     final profile = AppDataStore.instance.profile;
     final companyName = profile?.businessName.isNotEmpty == true
         ? profile!.businessName
         : (profile?.name ?? 'Our Company');
-    final dateStr = '${inv.date.day.toString().padLeft(2, '0')}/${inv.date.month.toString().padLeft(2, '0')}/${inv.date.year}';
 
-    final message = 'Hello ${client.name},\n\n'
-        'Please find your invoice details below:\n\n'
-        '📄 Invoice No: ${inv.billNo}\n'
-        '📅 Date: $dateStr\n'
-        '💰 Amount: ₹${inv.totalAmount.toStringAsFixed(2)}\n\n'
-        'From: $companyName\n\n'
-        'Thank you for your business!';
+    final userId = FirebaseAuth.instance.currentUser?.uid ?? '';
+    final invoiceUrl = 'https://billings-app-77b3e.web.app/invoice/$userId/${inv.id}';
 
-    final whatsappUrl = Uri.parse(
-      'https://wa.me/${cleanPhone.replaceAll('+', '')}?text=${Uri.encodeComponent(message)}',
-    );
+    final message = 'Invoice ${inv.billNo} from $companyName for Rs.${inv.totalAmount.toStringAsFixed(2)} is ready.\n\nView/Download: $invoiceUrl';
 
-    if (await canLaunchUrl(whatsappUrl)) {
-      await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
-    } else {
+    // Send SMS directly from frontend using an SMS provider (e.g., Twilio)
+    // To use this, you need to pass these variables when running the app:
+    // --dart-define=TWILIO_SID=your_sid --dart-define=TWILIO_AUTH_TOKEN=your_token --dart-define=TWILIO_FROM=your_number
+    try {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open WhatsApp')),
+        const SnackBar(content: Text('Sending SMS...')),
+      );
+
+      const twilioSid = String.fromEnvironment('TWILIO_SID');
+      const twilioAuthToken = String.fromEnvironment('TWILIO_AUTH_TOKEN');
+      const twilioFrom = String.fromEnvironment('TWILIO_FROM');
+
+      if (twilioSid.isEmpty || twilioAuthToken.isEmpty || twilioFrom.isEmpty) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('SMS provider credentials not configured! Please see flutter run args.')),
+        );
+        return;
+      }
+
+      final url = Uri.parse('https://api.twilio.com/2010-04-01/Accounts/$twilioSid/Messages.json');
+      final authStr = '$twilioSid:$twilioAuthToken';
+      final authBytes = utf8.encode(authStr);
+      final authBase64 = base64Encode(authBytes);
+
+      String formattedPhone = phone;
+      if (!formattedPhone.startsWith('+')) {
+        // Default to India (+91) if no country code provided
+        formattedPhone = '+91$formattedPhone';
+      }
+
+      final response = await http.post(
+        url,
+        headers: {
+          'Authorization': 'Basic $authBase64',
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: {
+          'From': twilioFrom,
+          'To': formattedPhone,
+          'Body': message,
+        },
+      );
+
+      if (!mounted) return;
+      if (response.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('SMS sent successfully!')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to send SMS: ${response.statusCode} - ${response.body}')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to send SMS: $e')),
       );
     }
   }
@@ -1080,12 +1079,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         color: theme.hintColor,
                         onPressed: () => _onPreviewInvoice(inv),
                       ),
-                      IconButton(
-                        tooltip: 'Share on WhatsApp',
-                        icon: const Icon(Icons.share, size: 20),
-                        color: const Color(0xFF25D366), // WhatsApp green
-                        onPressed: () => _shareOnWhatsApp(inv),
-                      ),
+                      // IconButton(
+                      //   tooltip: 'Share via SMS',
+                      //   icon: const Icon(Icons.message, size: 20),
+                      //   color: theme.colorScheme.primary,
+                      //   onPressed: () => _shareViaSMS(inv),
+                      // ),
                       IconButton(
                         tooltip: 'Delete',
                         icon: const Icon(Icons.delete_outline, size: 20),

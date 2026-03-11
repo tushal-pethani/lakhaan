@@ -2,7 +2,19 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Each user can read/write only their own data
+    // Public read access to specific documents for the invoice web viewer
+    // (UUIDs make these unguessable without the direct link)
+    match /users/{userId}/invoices/{invoiceId} {
+      allow get: if true;
+    }
+    match /users/{userId}/clients/{clientId} {
+      allow get: if true;
+    }
+    match /users/{userId}/profile/{document=**} {
+      allow get: if true;
+    }
+
+    // Each user can read/write their own data
     match /users/{userId}/{document=**} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
