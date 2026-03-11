@@ -21,6 +21,11 @@ jobs:
         with:
           channel: 'stable'
 
+      - name: Create firebase_options.dart
+        run: |
+          $bytes = [System.Convert]::FromBase64String("${{ secrets.FIREBASE_OPTIONS_BASE64 }}")
+          [System.IO.File]::WriteAllBytes("lib/firebase_options.dart", $bytes)
+
       - name: Install Dependencies
         run: flutter pub get
 
