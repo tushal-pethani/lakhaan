@@ -1,0 +1,35 @@
+name: Build Windows Application
+
+on:
+  workflow_dispatch: # Allows manual trigger from the GitHub Actions tab
+  push:
+    branches:
+      - main
+      - app
+
+jobs:
+  build:
+    name: Build Windows App
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Build Windows Application
+        run: flutter build windows --release --dart-define=X_API_KEY="${{ secrets.X_API_KEY }}" --dart-define=X_API_SECRET="${{ secrets.X_API_SECRET }}" --dart-define=APP_SECRET_KEY="${{ secrets.APP_SECRET_KEY }}" --dart-define=TWILIO_SID="${{ secrets.TWILIO_SID }}" --dart-define=TWILIO_AUTH_TOKEN="${{ secrets.TWILIO_AUTH_TOKEN }}" --dart-define=TWILIO_FROM="${{ secrets.TWILIO_FROM }}"
+
+      - name: Upload Windows Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: billings-windows-app
+          path: build/windows/x64/runner/Release/
+          retention-days: 7
