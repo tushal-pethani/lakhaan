@@ -124,7 +124,10 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       final response = await http.post(
         Uri.parse(_gstProxyUrl),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Origin': 'https://billings-app-77b3e.web.app',
+        },
         body: jsonEncode({'gstin': cleanGst}),
       );
       if (response.statusCode == 200) {

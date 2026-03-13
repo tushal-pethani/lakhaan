@@ -59,7 +59,10 @@ class GstLookupService {
     try {
       final response = await http.post(
         Uri.parse(_proxyUrl),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Origin': 'https://billings-app-77b3e.web.app',
+        },
         body: jsonEncode({'gstin': cleanGst}),
       );
 
