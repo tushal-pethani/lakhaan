@@ -37,8 +37,14 @@ class FirestoreService {
   }
 
   Future<String> addClient(Map<String, dynamic> client) async {
+    if (userId == null) throw Exception('User not authenticated');
     final docRef = await _db.collection('users').doc(userId).collection('clients').add(client);
-    _incrementClientCount();
+    try {
+      await _incrementClientCount();
+    } catch (e) {
+      debugPrint('Analytics increment failed: $e');
+      // Non-critical, so we don't throw here
+    }
     return docRef.id;
   }
 
@@ -79,21 +85,29 @@ class FirestoreService {
   // ============ ANALYTICS ============
 
   Future<void> _incrementClientCount() async {
-    String today = DateTime.now().toIso8601String().split('T')[0];
+    if (userId == null) return;
     
+    String today = DateTime.now().toIso8601String().split('T')[0];
     DocumentReference docRef = _db.collection('analytics').doc('client_additions');
 
-    await _db.runTransaction((transaction) async {
-      DocumentSnapshot snapshot = await transaction.get(docRef);
+    // On Windows, transactions are unstable. Use a safer set-with-merge approach.
+    // Even on other platforms, this is often more robust for simple counters
+    // as it doesn't require complex retry logic or lock management that can hang.
+    try {
+      final doc = await docRef.get();
+      int currentCount = 0;
+      if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>?;
+        currentCount = data?[today] ?? 0;
+      }
       
-      Map<String, dynamic>? data = snapshot.exists ? snapshot.data() as Map<String, dynamic>? : null;
-      int currentCount = data?[today] ?? 0;
-      
-      transaction.set(docRef, {
+      await docRef.set({
         today: currentCount + 1,
         'lastUpdated': DateTime.now().toIso8601String(),
       }, SetOptions(merge: true));
-    });
+    } catch (e) {
+      debugPrint('Error incrementing client count: $e');
+    }
   }
 
   static Future<Map<String, int>> getClientAnalytics() async {

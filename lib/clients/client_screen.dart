@@ -743,51 +743,62 @@ class _ClientsScreenState extends State<ClientsScreen> {
     if (result == null) return;
     bool isNewClient = editing == null;
 
-    // On web, save to Firestore first to get ID
-    
-    if (isNewClient) {
-      final clientId = await FirestoreService.instance.addClient({
-        'name': result.name,
-        'gstNumber': result.gstNumber,
-        'panNumber': result.panNumber,
-        'address': result.address,
-        'city': result.city,
-        'state': result.state,
-        'pincode': result.pincode,
-        'phone': result.phone,
-        'email': result.email,
-      });
-      final updatedClient = Client(
-        id: clientId,
-        name: result.name,
-        gstNumber: result.gstNumber,
-        panNumber: result.panNumber,
-        address: result.address,
-        city: result.city,
-        state: result.state,
-        pincode: result.pincode,
-        phone: result.phone,
-        email: result.email,
-      );
-      setState(() => _clients.add(updatedClient));
-    } else {
-      await FirestoreService.instance.updateClient(editing!.id, {
-        'name': result.name,
-        'gstNumber': result.gstNumber,
-        'panNumber': result.panNumber,
-        'address': result.address,
-        'city': result.city,
-        'state': result.state,
-        'pincode': result.pincode,
-        'phone': result.phone,
-        'email': result.email,
-      });
-      setState(() {
-        final index = _clients.indexWhere((c) => c.id == editing.id);
-        if (index != -1) _clients[index] = result;
-      });
+    try {
+      if (isNewClient) {
+        final clientId = await FirestoreService.instance.addClient({
+          'name': result.name,
+          'gstNumber': result.gstNumber,
+          'panNumber': result.panNumber,
+          'address': result.address,
+          'city': result.city,
+          'state': result.state,
+          'pincode': result.pincode,
+          'phone': result.phone,
+          'email': result.email,
+        });
+        final updatedClient = Client(
+          id: clientId,
+          name: result.name,
+          gstNumber: result.gstNumber,
+          panNumber: result.panNumber,
+          address: result.address,
+          city: result.city,
+          state: result.state,
+          pincode: result.pincode,
+          phone: result.phone,
+          email: result.email,
+        );
+        setState(() => _clients.add(updatedClient));
+      } else {
+        await FirestoreService.instance.updateClient(editing!.id, {
+          'name': result.name,
+          'gstNumber': result.gstNumber,
+          'panNumber': result.panNumber,
+          'address': result.address,
+          'city': result.city,
+          'state': result.state,
+          'pincode': result.pincode,
+          'phone': result.phone,
+          'email': result.email,
+        });
+        setState(() {
+          final index = _clients.indexWhere((c) => c.id == editing.id);
+          if (index != -1) _clients[index] = result;
+        });
+      }
+      await _persistClients();
+    } catch (e) {
+      debugPrint('Error saving client: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save client: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
-    await _persistClients();
 
   }
 
