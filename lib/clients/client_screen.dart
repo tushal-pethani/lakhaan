@@ -6,6 +6,8 @@ import 'dart:convert';
 import '../navbar/navbar.dart';
 import '../storage/app_data_store.dart';
 import '../services/firestore_service.dart';
+import '../services/translation_service.dart';
+import '../utils/formatters.dart';
 
 class GstLookupService {
   static const Map<String, String> stateCodes = {
@@ -225,7 +227,7 @@ class _ClientsScreenState extends State<ClientsScreen> {
     keyboardType: keyboardType,
     enabled: enabled,
     decoration: InputDecoration(
-      labelText: label,
+      labelText: label.tr,
       prefixIcon: Icon(icon, size: 20),
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
@@ -234,6 +236,9 @@ class _ClientsScreenState extends State<ClientsScreen> {
         ? (v) => (v == null || v.isEmpty) ? 'Required' : null
         : null,
     onChanged: onChanged,
+    inputFormatters: label == 'GST Number' || label == 'PAN Number' 
+        ? [UpperCaseTextFormatter()] 
+        : null,
   );
 
   Future<void> _onLogout() async {
@@ -701,7 +706,7 @@ class _ClientsScreenState extends State<ClientsScreen> {
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                               ),
-                              child: const Text('Cancel'),
+                              child: Text('Cancel'.tr),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -742,7 +747,7 @@ class _ClientsScreenState extends State<ClientsScreen> {
                                 ),
                               ),
                               child: Text(
-                                editing == null ? 'Add Client' : 'Save Changes',
+                                editing == null ? 'Add Client'.tr : 'Save'.tr,
                               ),
                             ),
                           ),
@@ -883,7 +888,7 @@ class _ClientsScreenState extends State<ClientsScreen> {
                           Icons.person_add_alt_1_outlined,
                           size: 18,
                         ),
-                        label: const Text('Add Client'),
+                        label: Text('Add Client'.tr),
                       ),
                     ],
                   ),

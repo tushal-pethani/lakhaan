@@ -13,6 +13,7 @@ import 'firebase_options.dart';
 import 'login/login_screen.dart';
 import 'services/firestore_service.dart';
 import 'services/update_service.dart';
+import 'services/translation_service.dart';
 import 'storage/app_data_store.dart';
 import 'theme/app_theme.dart';
 import 'invoices/public_invoice_screen.dart';
@@ -79,32 +80,36 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<ThemeMode>(
-      valueListenable: AppTheme.themeMode,
-      builder: (context, mode, _) {
-        return MaterialApp(
-          debugShowCheckedModeBanner: false,
-          themeMode: mode,
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
-          initialRoute: '/',
-          onGenerateRoute: (settings) {
-            // Handle /invoice/:userId/:invoiceId
-            if (settings.name != null && settings.name!.startsWith('/invoice/')) {
-              final segments = settings.name!.split('/');
-              // segments will be ['', 'invoice', 'userId', 'invoiceId']
-              if (segments.length >= 4) {
-                final userId = segments[2];
-                final invoiceId = segments[3];
-                return MaterialPageRoute(
-                  builder: (context) => PublicInvoiceScreen(userId: userId, invoiceId: invoiceId),
-                  settings: settings,
-                );
-              }
-            }
-            return null; // Let standard routes handle everything else
-          },
-          routes: {
+    return ValueListenableBuilder<String>(
+      valueListenable: TranslationService.instance.currentLanguage,
+      builder: (context, currentLang, _) {
+        return ValueListenableBuilder<ThemeMode>(
+          valueListenable: AppTheme.themeMode,
+          builder: (context, mode, _) {
+            return MaterialApp(
+              key: ValueKey(currentLang), // Force rebuild on language change
+              debugShowCheckedModeBanner: false,
+              themeMode: mode,
+              theme: AppTheme.lightTheme,
+              darkTheme: AppTheme.darkTheme,
+              initialRoute: '/',
+              onGenerateRoute: (settings) {
+                // Handle /invoice/:userId/:invoiceId
+                if (settings.name != null && settings.name!.startsWith('/invoice/')) {
+                  final segments = settings.name!.split('/');
+                  // segments will be ['', 'invoice', 'userId', 'invoiceId']
+                  if (segments.length >= 4) {
+                    final userId = segments[2];
+                    final invoiceId = segments[3];
+                    return MaterialPageRoute(
+                      builder: (context) => PublicInvoiceScreen(userId: userId, invoiceId: invoiceId),
+                      settings: settings,
+                    );
+                  }
+                }
+                return null; // Let standard routes handle everything else
+              },
+              routes: {
             '/': (_) => const _AuthGate(),
             '/clients': (_) => const ClientsScreen(),
             '/dashboard': (_) => const DashboardScreen(),
@@ -240,6 +245,7 @@ class _StoreInitializerState extends State<_StoreInitializer> {
             AppDataStore.instance.settings.themeMode == 'dark'
                 ? ThemeMode.dark
                 : ThemeMode.light;
+        TranslationService.instance.setLanguage(AppDataStore.instance.settings.languageCode);
       } catch (e) {
         debugPrint('Error during store initialization: $e');
       } finally {

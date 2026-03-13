@@ -8,6 +8,7 @@ import '../profile/profile_screen.dart';
 import '../login/login_screen.dart';
 import '../storage/app_data_store.dart';
 import '../theme/app_theme.dart';
+import '../services/translation_service.dart';
 
 /// Flutter version of the React `Navbar` component.
 ///
@@ -126,8 +127,32 @@ class _NavbarState extends State<Navbar> {
         ),
       ),
       actions: [
+        PopupMenuButton<String>(
+          icon: const Icon(Icons.language_rounded),
+          tooltip: 'Change Language',
+          onSelected: (code) {
+            TranslationService.instance.setLanguage(code);
+            AppDataStore.instance.settings.languageCode = code;
+            AppDataStore.instance.saveSettings(); // Optional: if you have a save settings explicitly, or we can just rely on the in-memory persistence for now if not implemented. We should add a save method properly.
+          },
+          itemBuilder: (context) => [
+            const PopupMenuItem(
+              value: 'en',
+              child: Text('English'),
+            ),
+            const PopupMenuItem(
+              value: 'gu',
+              child: Text('ગુજરાતી'),
+            ),
+            const PopupMenuItem(
+              value: 'hi',
+              child: Text('हिन्दी'),
+            ),
+          ],
+        ),
         IconButton(
           icon: Icon(isDark ? Icons.wb_sunny_outlined : Icons.nightlight_round),
+          tooltip: 'Toggle Theme',
           onPressed: AppTheme.toggleTheme,
         ),
         GestureDetector(
@@ -229,7 +254,7 @@ class NavbarDrawer extends StatelessWidget {
                 children: [
                   ListTile(
                     leading: const Icon(Icons.dashboard_outlined),
-                    title: const Text('Dashboard'),
+                    title: Text('Dashboard'.tr),
                     onTap: () => _pushPage(
                       context,
                       const DashboardScreen(),
@@ -238,12 +263,12 @@ class NavbarDrawer extends StatelessWidget {
                   ),
                   ListTile(
                     leading: const Icon(Icons.group_outlined),
-                    title: const Text('Add New Client'),
+                    title: Text('Add New Client'.tr),
                     onTap: () => _pushPage(context, const ClientsScreen()),
                   ),
                   ListTile(
                     leading: const Icon(Icons.logout),
-                    title: const Text('Logout'),
+                    title: Text('Logout'.tr),
                     onTap: () {
                       Navigator.of(context).pop();
                       if (onLogout != null) {

@@ -255,14 +255,22 @@ class StoredProfile {
 
 class AppSettings {
   String themeMode; // 'light' or 'dark'
+  String languageCode; // 'en', 'gu', 'hi'
 
-  AppSettings({required this.themeMode});
+  AppSettings({required this.themeMode, this.languageCode = 'en'});
 
-  Map<String, dynamic> toJson() => {'themeMode': themeMode};
+  Map<String, dynamic> toJson() => {
+    'themeMode': themeMode,
+    'languageCode': languageCode,
+  };
 
   factory AppSettings.fromJson(Map<String, dynamic> json) {
     final mode = (json['themeMode'] as String?) ?? 'light';
-    return AppSettings(themeMode: mode == 'dark' ? 'dark' : 'light');
+    final lang = (json['languageCode'] as String?) ?? 'en';
+    return AppSettings(
+      themeMode: mode == 'dark' ? 'dark' : 'light',
+      languageCode: ['en', 'gu', 'hi'].contains(lang) ? lang : 'en',
+    );
   }
 }
 

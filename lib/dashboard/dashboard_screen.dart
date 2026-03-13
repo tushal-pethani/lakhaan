@@ -14,6 +14,7 @@ import '../invoices/invoice_preview_screen.dart';
 import '../invoices/invoice_theme_renderer.dart';
 import '../navbar/navbar.dart';
 import '../services/firestore_service.dart';
+import '../services/translation_service.dart';
 import '../storage/app_data_store.dart';
 
 /// Simple models to mirror your React types.
@@ -733,7 +734,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Dashboard',
+                              'Dashboard'.tr,
                               style: theme.textTheme.headlineSmall!.copyWith(
                                 fontWeight: FontWeight.bold,
                               ),
