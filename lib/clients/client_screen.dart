@@ -236,6 +236,9 @@ class _ClientsScreenState extends State<ClientsScreen> {
   Future<void> _onLogout() async {
     await FirebaseAuth.instance.signOut();
     AppDataStore.instance.clearAll();
+    if (mounted) {
+      Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+    }
   }
 
   Future<void> _openClientForm({Client? editing}) async {

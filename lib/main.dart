@@ -121,6 +121,38 @@ class _AuthGate extends StatefulWidget {
 }
 
 class _AuthGateState extends State<_AuthGate> {
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final user = snapshot.data;
+
+        if (user == null) {
+          return const LoginScreen();
+        }
+
+        return _StoreInitializer(email: user.email ?? '');
+      },
+    );
+  }
+}
+
+class _StoreInitializer extends StatefulWidget {
+  final String email;
+  const _StoreInitializer({required this.email});
+
+  @override
+  State<_StoreInitializer> createState() => _StoreInitializerState();
+}
+
+class _StoreInitializerState extends State<_StoreInitializer> {
   String? _initializedEmailKey;
   bool _initializingStore = false;
   String _loadingStep = 'Initializing...';
@@ -144,7 +176,7 @@ class _AuthGateState extends State<_AuthGate> {
       try {
         debugPrint('--- [DEBUG] Fetching Firestore profile... ---');
         setState(() => _loadingStep = 'Fetching profile from Firestore...');
-        // Load profile from Firestore with a timeout to prevent hanging
+        
         try {
           final profileData = await FirestoreService.instance
               .getProfile()
@@ -153,7 +185,7 @@ class _AuthGateState extends State<_AuthGate> {
             AppDataStore.instance.profile = StoredProfile(
               name: profileData['name'] as String? ?? 'Default User',
               email: profileData['email'] as String? ?? email,
-              businessName: profileData['name'] as String? ?? 'Business',
+              businessName: profileData['businessName'] as String? ?? (profileData['name'] as String? ?? 'Business'),
               address: profileData['address'] as String? ?? '',
               city: profileData['city'] as String? ?? '',
               state: profileData['state'] as String? ?? '',
@@ -168,7 +200,7 @@ class _AuthGateState extends State<_AuthGate> {
             );
           } else {
              AppDataStore.instance.profile = StoredProfile(
-                name: 'Default User',
+                name: 'User',
                 email: email,
                 businessName: 'Business',
                 address: '',
@@ -182,7 +214,7 @@ class _AuthGateState extends State<_AuthGate> {
         } catch (e) {
           debugPrint('Failed to load profile from Firestore: $e');
            AppDataStore.instance.profile = StoredProfile(
-              name: 'Default User',
+              name: 'User',
               email: email,
               businessName: 'Business',
               address: '',
@@ -222,7 +254,15 @@ class _AuthGateState extends State<_AuthGate> {
   @override
   void initState() {
     super.initState();
-    _ensureStoreForEmail('default@lakhaan.com');
+    _ensureStoreForEmail(widget.email);
+  }
+
+  @override
+  void didUpdateWidget(covariant _StoreInitializer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.email != widget.email) {
+      _ensureStoreForEmail(widget.email);
+    }
   }
 
   @override
@@ -235,7 +275,7 @@ class _AuthGateState extends State<_AuthGate> {
             children: [
               const CircularProgressIndicator(),
               const SizedBox(height: 24),
-              const Text('Bypassing login and loading default user data...'),
+              const Text('Loading user data...'),
               const SizedBox(height: 8),
               Text(
                 'Current Step: $_loadingStep',

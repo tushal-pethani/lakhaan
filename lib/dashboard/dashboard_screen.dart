@@ -203,6 +203,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _onLogout() async {
     await FirebaseAuth.instance.signOut();
+    if (mounted) {
+      Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+    }
   }
 
   void _deleteInvoice(String id) {
