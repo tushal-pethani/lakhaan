@@ -12,9 +12,11 @@ import 'home_screen.dart';
 import 'firebase_options.dart';
 import 'login/login_screen.dart';
 import 'services/firestore_service.dart';
+import 'services/update_service.dart';
 import 'storage/app_data_store.dart';
 import 'theme/app_theme.dart';
 import 'invoices/public_invoice_screen.dart';
+import 'widgets/update_dialog.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 
 Future<void> main() async {
@@ -156,6 +158,7 @@ class _StoreInitializerState extends State<_StoreInitializer> {
   String? _initializedEmailKey;
   bool _initializingStore = false;
   String _loadingStep = 'Initializing...';
+  bool _updateChecked = false;
 
   String _emailKey(String email) => Uri.encodeComponent(email.trim().toLowerCase());
 
@@ -246,9 +249,25 @@ class _StoreInitializerState extends State<_StoreInitializer> {
             _initializedEmailKey = key;
             _initializingStore = false;
           });
+
+          // Check for updates after store is initialized
+          _checkForUpdate();
         }
       }
     });
+  }
+
+  Future<void> _checkForUpdate() async {
+    if (_updateChecked) return;
+    _updateChecked = true;
+    try {
+      final updateInfo = await UpdateService.instance.checkForUpdate();
+      if (updateInfo != null && mounted) {
+        UpdateDialog.show(context, updateInfo);
+      }
+    } catch (e) {
+      debugPrint('Update check error: $e');
+    }
   }
 
   @override

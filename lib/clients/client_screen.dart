@@ -583,6 +583,24 @@ class _ClientsScreenState extends State<ClientsScreen> {
                                                   setDialogState(() {
                                                     isVerifying = false;
                                                     if (details != null) {
+                                                      // Check for duplicate GST number
+                                                      final cleanGst = gst.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '');
+                                                      final isDuplicate = _clients.any((c) =>
+                                                        c.gstNumber.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '') == cleanGst &&
+                                                        (editing == null || c.id != editing.id)
+                                                      );
+                                                      if (isDuplicate) {
+                                                        ScaffoldMessenger.of(ctx).showSnackBar(
+                                                          const SnackBar(
+                                                            content: Text(
+                                                              'A client with this GST number already exists!',
+                                                            ),
+                                                            backgroundColor: Colors.red,
+                                                            behavior: SnackBarBehavior.floating,
+                                                          ),
+                                                        );
+                                                        return; // Don't set isVerified
+                                                      }
                                                       name =
                                                           details['name'] ?? '';
                                                       address =
