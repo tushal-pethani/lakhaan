@@ -47,9 +47,12 @@ Future<void> main() async {
     // The Firestore C++ SDK persistence engine hangs on Windows, causing infinite loading.
     // Disabling it fixes the issue.
     if (!kIsWeb && Platform.isWindows) {
+      debugPrint('--- [DEBUG] disabling Firestore persistence & enabling logs ---');
       FirebaseFirestore.instance.settings = const Settings(
         persistenceEnabled: false,
       );
+      FirebaseFirestore.setLoggingEnabled(true);
+      debugPrint('--- [DEBUG] Firestore persistence disabled & logs enabled ---');
     }
   } catch (e) {
     debugPrint('Firebase init error: $e');
@@ -120,6 +123,7 @@ class _AuthGate extends StatefulWidget {
 class _AuthGateState extends State<_AuthGate> {
   String? _initializedEmailKey;
   bool _initializingStore = false;
+  String _loadingStep = 'Initializing...';
 
   String _emailKey(String email) => Uri.encodeComponent(email.trim().toLowerCase());
 
@@ -130,10 +134,16 @@ class _AuthGateState extends State<_AuthGate> {
     if (_initializingStore) return;
 
     Future.microtask(() async {
+      debugPrint('--- [DEBUG] _ensureStoreForEmail microtask started ---');
       if (!mounted) return;
-      setState(() => _initializingStore = true);
+      setState(() {
+        _initializingStore = true;
+        _loadingStep = 'Starting store initialization...';
+      });
       
       try {
+        debugPrint('--- [DEBUG] Fetching Firestore profile... ---');
+        setState(() => _loadingStep = 'Fetching profile from Firestore...');
         // Load profile from Firestore with a timeout to prevent hanging
         try {
           final profileData = await FirestoreService.instance
@@ -184,9 +194,13 @@ class _AuthGateState extends State<_AuthGate> {
           );
         }
 
+        setState(() => _loadingStep = 'Initializing local database...');
+        debugPrint('--- [DEBUG] Calling AppDataStore.instance.init(key)... ---');
         await AppDataStore.instance.init(key)
             .timeout(const Duration(seconds: 5));
+        debugPrint('--- [DEBUG] AppDataStore.instance.init(key) finished ---');
         
+        setState(() => _loadingStep = 'Applying theme...');
         AppTheme.themeMode.value =
             AppDataStore.instance.settings.themeMode == 'dark'
                 ? ThemeMode.dark
@@ -194,6 +208,7 @@ class _AuthGateState extends State<_AuthGate> {
       } catch (e) {
         debugPrint('Error during store initialization: $e');
       } finally {
+        debugPrint('--- [DEBUG] _ensureStoreForEmail microtask finally block ---');
         if (mounted) {
           setState(() {
             _initializedEmailKey = key;
@@ -217,10 +232,15 @@ class _AuthGateState extends State<_AuthGate> {
         body: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            children: const [
-              CircularProgressIndicator(),
-              SizedBox(height: 24),
-              Text('Bypassing login and loading default user data...'),
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 24),
+              const Text('Bypassing login and loading default user data...'),
+              const SizedBox(height: 8),
+              Text(
+                'Current Step: $_loadingStep',
+                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
+              ),
             ],
           ),
         ),
