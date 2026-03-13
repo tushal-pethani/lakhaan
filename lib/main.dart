@@ -114,6 +114,8 @@ class MyApp extends StatelessWidget {
             '/clients': (_) => const ClientsScreen(),
             '/dashboard': (_) => const DashboardScreen(),
           },
+            );
+          },
         );
       },
     );
