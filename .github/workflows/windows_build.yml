@@ -1,7 +1,7 @@
 name: Build Windows Application
 
 on:
-  workflow_dispatch: # Allows manual trigger from the GitHub Actions tab
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -30,7 +30,6 @@ jobs:
             echo "Error: FIREBASE_OPTIONS_BASE64 secret is missing!"
             exit 1
           fi
-          # The -d flag works for decoding in git bash (Windows)
           echo "$FIREBASE_OPTIONS_BASE64" | base64 -d > lib/firebase_options.dart
 
       - name: Install Dependencies
@@ -38,6 +37,26 @@ jobs:
 
       - name: Build Windows Application
         run: flutter build windows --release --dart-define=X_API_KEY="${{ secrets.X_API_KEY }}" --dart-define=X_API_SECRET="${{ secrets.X_API_SECRET }}" --dart-define=APP_SECRET_KEY="${{ secrets.APP_SECRET_KEY }}" --dart-define=TWILIO_SID="${{ secrets.TWILIO_SID }}" --dart-define=TWILIO_AUTH_TOKEN="${{ secrets.TWILIO_AUTH_TOKEN }}" --dart-define=TWILIO_FROM="${{ secrets.TWILIO_FROM }}"
+
+      - name: Bundle VC++ Runtime DLLs
+        shell: bash
+        run: |
+          RELEASE_DIR="build/windows/x64/runner/Release"
+          VS_REDIST="/c/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Redist/MSVC"
+          LATEST_DIR=$(ls -d "$VS_REDIST"/*/x64/Microsoft.VC*.CRT 2>/dev/null | head -1)
+          if [ -d "$LATEST_DIR" ]; then
+            cp "$LATEST_DIR/vcruntime140.dll" "$RELEASE_DIR/" 2>/dev/null || true
+            cp "$LATEST_DIR/vcruntime140_1.dll" "$RELEASE_DIR/" 2>/dev/null || true
+            cp "$LATEST_DIR/msvcp140.dll" "$RELEASE_DIR/" 2>/dev/null || true
+            echo "Bundled VC++ runtime DLLs from: $LATEST_DIR"
+          else
+            echo "Warning: Could not find VC++ Redist directory. Trying System32..."
+            cp /c/Windows/System32/vcruntime140.dll "$RELEASE_DIR/" 2>/dev/null || true
+            cp /c/Windows/System32/vcruntime140_1.dll "$RELEASE_DIR/" 2>/dev/null || true
+            cp /c/Windows/System32/msvcp140.dll "$RELEASE_DIR/" 2>/dev/null || true
+          fi
+          echo "Files in Release folder:"
+          ls -la "$RELEASE_DIR/"
 
       - name: Upload Windows Build Artifact
         uses: actions/upload-artifact@v4
