@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'clients/client_screen.dart';
@@ -42,6 +43,14 @@ Future<void> main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    
+    // The Firestore C++ SDK persistence engine hangs on Windows, causing infinite loading.
+    // Disabling it fixes the issue.
+    if (!kIsWeb && Platform.isWindows) {
+      FirebaseFirestore.instance.settings = const Settings(
+        persistenceEnabled: false,
+      );
+    }
   } catch (e) {
     debugPrint('Firebase init error: $e');
   }
