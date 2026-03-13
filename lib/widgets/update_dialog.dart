@@ -107,18 +107,27 @@ class _UpdateDialogState extends State<UpdateDialog> {
 
       // 5. Create a batch script that will:
       //    - Wait for this app to close
+      //    - Find the actual directory containing the new files (in case they are nested in the ZIP)
       //    - Copy new files over old files
       //    - Restart the app
       //    - Clean up
       final batPath = '${tempDir.path}\\billings_updater.bat';
       final batContent = '''
 @echo off
+setlocal enabledelayedexpansion
 echo Lakhaan Updater - Installing v${widget.updateInfo.latestVersion}...
 echo Waiting for application to close...
 timeout /t 3 /nobreak >nul
 
-echo Copying updated files...
-xcopy /E /Y /Q "$extractDir\\*" "$appDir\\"
+echo Locating extracted files...
+set "SOURCE_DIR=$extractDir"
+:: Automatically find the nested folder if the zip contains a single root folder (like Release/)
+for /d %%I in ("$extractDir\\*") do (
+    set "SOURCE_DIR=%%I"
+)
+
+echo Copying updated files from !SOURCE_DIR! to $appDir...
+xcopy /E /Y /Q "!SOURCE_DIR!\\*" "$appDir\\"
 if %ERRORLEVEL% NEQ 0 (
   echo Update failed. Please download manually.
   pause
