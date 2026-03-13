@@ -741,7 +741,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Welcome back, $displayName',
+                              'Welcome back, $displayName'.tr,
                               style: theme.textTheme.bodySmall!.copyWith(
                                 color: theme.hintColor,
                               ),
@@ -753,7 +753,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ElevatedButton.icon(
                         onPressed: _onNewInvoice,
                         icon: const Icon(Icons.post_add_outlined, size: 18),
-                        label: const Text('New Invoice'),
+                        label: Text('New Invoice'.tr),
                       ),
                     ],
                   ),
@@ -768,7 +768,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         children: [
                           Expanded(
                             child: _StatCard(
-                              label: 'Total Invoices',
+                              label: 'Total Invoices'.tr,
                               value: _invoices.length.toString(),
                               icon: Icons.receipt_long,
                               color: theme.colorScheme.primary,
@@ -777,7 +777,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           SizedBox(height: isWide ? 0 : 16, width: isWide ? 16 : 0),
                           Expanded(
                             child: _StatCard(
-                              label: 'Pending',
+                              label: 'Pending'.tr,
                               value: pendingCount.toString(),
                               icon: Icons.pending_actions,
                               color: const Color(0xFFF59E0B), // Amber 500
@@ -807,7 +807,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 padding: const EdgeInsets.only(left: 36),
                                 child: TextField(
                                   decoration: const InputDecoration(
-                                    hintText: 'Search invoices...',
+                                    hintText: 'Search invoices...'.tr,
                                     isDense: true,
                                     border: OutlineInputBorder(),
                                   ),
@@ -825,15 +825,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                       // Filter (status)
                       PopupMenuButton<String>(
-                        tooltip: 'Filter by status',
+                        tooltip: 'Filter by status'.tr,
                         onSelected: (value) {
                           setState(() => _statusFilter = value);
                         },
-                        itemBuilder: (context) => const [
-                          PopupMenuItem(value: 'all', child: Text('All')),
-                          PopupMenuItem(value: 'draft', child: Text('Draft')),
-                          PopupMenuItem(value: 'sent', child: Text('Sent')),
-                          PopupMenuItem(value: 'paid', child: Text('Paid')),
+                        itemBuilder: (context) => [
+                          PopupMenuItem(value: 'all', child: Text('All'.tr)),
+                          PopupMenuItem(value: 'draft', child: Text('Draft'.tr)),
+                          PopupMenuItem(value: 'sent', child: Text('Sent'.tr)),
+                          PopupMenuItem(value: 'paid', child: Text('Paid'.tr)),
                         ],
                         child: OutlinedButton(
                           style: OutlinedButton.styleFrom(
@@ -848,34 +848,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                       // Sort
                       PopupMenuButton<String>(
-                        tooltip: 'Sort by',
+                        tooltip: 'Sort by'.tr,
                         onSelected: (value) {
                           setState(() => _sortBy = value);
                         },
-                        itemBuilder: (context) => const [
+                        itemBuilder: (context) => [
                           PopupMenuItem(
                             value: 'date-desc',
-                            child: Text('Date (Newest)'),
+                            child: Text('Date (Newest)'.tr),
                           ),
                           PopupMenuItem(
                             value: 'date-asc',
-                            child: Text('Date (Oldest)'),
+                            child: Text('Date (Oldest)'.tr),
                           ),
                           PopupMenuItem(
                             value: 'amount-desc',
-                            child: Text('Amount (High→Low)'),
+                            child: Text('Amount (High→Low)'.tr),
                           ),
                           PopupMenuItem(
                             value: 'amount-asc',
-                            child: Text('Amount (Low→High)'),
+                            child: Text('Amount (Low→High)'.tr),
                           ),
                           PopupMenuItem(
                             value: 'billno-asc',
-                            child: Text('Bill No. (A→Z)'),
+                            child: Text('Bill No. (A→Z)'.tr),
                           ),
                           PopupMenuItem(
                             value: 'billno-desc',
-                            child: Text('Bill No. (Z→A)'),
+                            child: Text('Bill No. (Z→A)'.tr),
                           ),
                         ],
                         child: OutlinedButton(
@@ -905,7 +905,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  'No invoices found',
+                                  'No invoices found'.tr,
                                   style: theme.textTheme.bodyMedium!.copyWith(
                                     color: theme.hintColor,
                                   ),
@@ -1072,13 +1072,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
-                        tooltip: 'Edit',
+                        tooltip: 'Edit'.tr,
                         icon: const Icon(Icons.edit_outlined, size: 20),
                         color: theme.hintColor,
                         onPressed: () => _onEditInvoice(inv),
                       ),
                       IconButton(
-                        tooltip: 'Print / Preview',
+                        tooltip: 'Print / Preview'.tr,
                         icon: const Icon(Icons.print_outlined, size: 20),
                         color: theme.hintColor,
                         onPressed: () => _onPreviewInvoice(inv),
@@ -1090,7 +1090,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       //   onPressed: () => _shareViaSMS(inv),
                       // ),
                       IconButton(
-                        tooltip: 'Delete',
+                        tooltip: 'Delete'.tr,
                         icon: const Icon(Icons.delete_outline, size: 20),
                         color: theme.colorScheme.error,
                         onPressed: () => _deleteInvoice(inv.id),

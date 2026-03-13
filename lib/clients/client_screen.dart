@@ -521,7 +521,7 @@ class _ClientsScreenState extends State<ClientsScreen> {
                                       ),
                                       const SizedBox(height: 16),
                                       Text(
-                                        'Enter GST Number',
+                                        'Enter GST Number'.tr,
                                         style: theme.textTheme.titleMedium!
                                             .copyWith(
                                               fontWeight: FontWeight.w600,
@@ -529,7 +529,7 @@ class _ClientsScreenState extends State<ClientsScreen> {
                                       ),
                                       const SizedBox(height: 8),
                                       Text(
-                                        'We will fetch business details automatically',
+                                        'We will fetch business details automatically'.tr,
                                         style: theme.textTheme.bodySmall!
                                             .copyWith(color: theme.hintColor),
                                         textAlign: TextAlign.center,
@@ -831,7 +831,7 @@ class _ClientsScreenState extends State<ClientsScreen> {
     _persistClients();
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(const SnackBar(content: Text('Client deleted')));
+    ).showSnackBar(SnackBar(content: Text('Client deleted'.tr)));
   }
 
   @override
@@ -868,14 +868,14 @@ class _ClientsScreenState extends State<ClientsScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Clients',
+                            'Clients'.tr,
                             style: theme.textTheme.headlineSmall!.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '${_clients.length} clients',
+                            '${_clients.length} ' + 'clients'.tr,
                             style: theme.textTheme.bodySmall!.copyWith(
                               color: theme.hintColor,
                             ),
@@ -913,14 +913,14 @@ class _ClientsScreenState extends State<ClientsScreen> {
                                 ),
                                 const SizedBox(height: 24),
                                 Text(
-                                  'No clients added yet',
+                                  'No clients added yet'.tr,
                                   style: theme.textTheme.titleMedium!.copyWith(
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  'Add your first client to start billing',
+                                  'Add your first client to start billing'.tr,
                                   style: theme.textTheme.bodyMedium!.copyWith(
                                     color: theme.hintColor,
                                   ),

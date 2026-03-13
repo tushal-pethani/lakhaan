@@ -10,6 +10,7 @@ import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../auth/auth_service.dart';
+import '../services/translation_service.dart';
 import '../storage/app_data_store.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -405,7 +406,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         const SizedBox(height: 32),
         Text(
-          isSignup ? 'Create account' : 'Welcome back',
+          isSignup ? 'Create account'.tr : 'Welcome back'.tr,
           textAlign: TextAlign.center,
           style: theme.textTheme.headlineSmall!.copyWith(
             fontWeight: FontWeight.bold,
@@ -415,8 +416,8 @@ class _LoginScreenState extends State<LoginScreen> {
         const SizedBox(height: 8),
         Text(
           isSignup
-              ? 'Start generating professional invoices'
-              : 'Sign in to your account to continue',
+              ? 'Start generating professional invoices'.tr
+              : 'Sign in to your account to continue'.tr,
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyMedium!.copyWith(
             color: theme.hintColor,
@@ -538,7 +539,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 color: theme.colorScheme.onPrimary,
                               ),
                             )
-                          : Text(gstVerified ? 'Verified ✓' : 'Live Verify'),
+                          : Text(gstVerified ? 'Verified ✓'.tr : 'Live Verify'.tr),
                     ),
                   ),
                 ),
@@ -845,7 +846,7 @@ class _TextField extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: theme.textTheme.bodySmall),
+          Text(label.tr, style: theme.textTheme.bodySmall),
           const SizedBox(height: 4),
           TextFormField(
             initialValue: initialValue,
@@ -853,7 +854,7 @@ class _TextField extends StatelessWidget {
             maxLength: maxLength,
             textCapitalization: textCapitalization,
             decoration: InputDecoration(
-              hintText: hint,
+              hintText: hint?.tr,
               counterText: '',
               suffixIcon: suffix != null
                   ? Padding(
@@ -901,7 +902,7 @@ class _PasswordField extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: theme.textTheme.bodySmall),
+          Text(label.tr, style: theme.textTheme.bodySmall),
           const SizedBox(height: 4),
           TextFormField(
             obscureText: !showPassword,

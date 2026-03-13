@@ -157,6 +157,86 @@ class TranslationService {
       'gu': 'કાઢી નાખો',
       'hi': 'हटाएं',
     },
+    'Business Name *': {
+      'en': 'Business Name *',
+      'gu': 'વ્યવસાયનું નામ *',
+      'hi': 'व्यवसाय का नाम *',
+    },
+    'Enter GST Number': {
+      'en': 'Enter GST Number',
+      'gu': 'જીએસટી નંબર દાખલ કરો',
+      'hi': 'जीएसटी नंबर दर्ज करें',
+    },
+    'We will fetch business details automatically': {
+      'en': 'We will fetch business details automatically',
+      'gu': 'અમે વ્યવસાયની વિગતો આપમેળે લાવીશું',
+      'hi': 'हम व्यवसाय विवरण स्वचालित रूप से प्राप्त करेंगे',
+    },
+    'Create account': {
+      'en': 'Create account',
+      'gu': 'ખાતું બનાવો',
+      'hi': 'खाता बनाएं',
+    },
+    'Welcome back': {
+      'en': 'Welcome back',
+      'gu': 'પાછા ફરવા બદલ સ્વાગત છે',
+      'hi': 'वापसी पर स्वागत है',
+    },
+    'Start generating professional invoices': {
+      'en': 'Start generating professional invoices',
+      'gu': 'વ્યાવસાયિક બિલ બનાવવાનું શરૂ કરો',
+      'hi': 'पेशेवर इनवॉइस बनाना शुरू करें',
+    },
+    'Sign in to your account to continue': {
+      'en': 'Sign in to your account to continue',
+      'gu': 'ચાલુ રાખવા માટે તમારા ખાતામાં સાઇન ઇન કરો',
+      'hi': 'जारी रखने के लिए अपने खाते में साइन इन करें',
+    },
+    'Full Name': {
+      'en': 'Full Name',
+      'gu': 'પૂરું નામ',
+      'hi': 'पूरा नाम',
+    },
+    'Password': {
+      'en': 'Password',
+      'gu': 'પાસવર્ડ',
+      'hi': 'पासवर्ड',
+    },
+    'Verified ✓': {
+      'en': 'Verified ✓',
+      'gu': 'ચકાસાયેલ ✓',
+      'hi': 'सत्यापित ✓',
+    },
+    'Live Verify': {
+      'en': 'Live Verify',
+      'gu': 'જીવંત ચકાસણી',
+      'hi': 'लाइव सत्यापन',
+    },
+    'Edit Profile': {
+      'en': 'Edit Profile',
+      'gu': 'પ્રોફાઇલ સંપાદિત કરો',
+      'hi': 'प्रोफाइल संपादित करें',
+    },
+    'Update your business information': {
+      'en': 'Update your business information',
+      'gu': 'તમારા વ્યવસાયની માહિતી અપડેટ કરો',
+      'hi': 'अपनी व्यावसायिक जानकारी अपडेट करें',
+    },
+    'Company Logo': {
+      'en': 'Company Logo',
+      'gu': 'કંપનીનો લોગો',
+      'hi': 'कंपनी का लोगो',
+    },
+    'Bank Details': {
+      'en': 'Bank Details',
+      'gu': 'બેંકની વિગતો',
+      'hi': 'बैंक विवरण',
+    },
+    'Save Changes': {
+      'en': 'Save Changes',
+      'gu': 'ફેરફારો સાચવો',
+      'hi': 'परिवर्तन सहेजें',
+    },
   };
 
   String translate(String key) {

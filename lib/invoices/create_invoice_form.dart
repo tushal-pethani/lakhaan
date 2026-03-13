@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
+
+import '../services/translation_service.dart';
 
 class InvoiceFormClient {
   final String id;
@@ -860,7 +861,7 @@ Widget _buildDropdown(
 }) => Column(
   crossAxisAlignment: CrossAxisAlignment.start,
   children: [
-    Text(label, style: theme.textTheme.bodySmall),
+    Text(label.tr, style: theme.textTheme.bodySmall),
     const SizedBox(height: 4),
     DropdownButtonFormField<String>(
       value: value.isEmpty ? null : value,
@@ -871,7 +872,7 @@ Widget _buildDropdown(
           vertical: 12,
         ),
       ),
-      hint: hint != null ? Text(hint, style: TextStyle(color: theme.hintColor)) : null,
+      hint: hint != null ? Text(hint.tr, style: TextStyle(color: theme.hintColor)) : null,
       items: items,
       onChanged: onChanged,
       validator: required
@@ -893,7 +894,7 @@ Widget _buildTextField(
   initialValue: value,
   maxLines: maxLines,
   decoration: InputDecoration(
-    labelText: label,
+    labelText: label.tr,
     isDense: true,
     contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
   ),
@@ -913,7 +914,7 @@ Widget _buildDatePicker(
 ) => Column(
   crossAxisAlignment: CrossAxisAlignment.start,
   children: [
-    Text(label, style: theme.textTheme.bodySmall),
+    Text(label.tr, style: theme.textTheme.bodySmall),
     const SizedBox(height: 4),
     InkWell(
       onTap: () async {
@@ -947,7 +948,7 @@ Widget _totalRow(String label, double value, ThemeData theme) => Padding(
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [
       Text(
-        label,
+        label.tr,
         style: theme.textTheme.bodySmall!.copyWith(color: theme.hintColor),
       ),
       Text('Rs.${value.toStringAsFixed(2)}', style: theme.textTheme.bodySmall),

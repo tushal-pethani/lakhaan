@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../storage/app_data_store.dart';
 import '../services/firestore_service.dart';
+import '../services/translation_service.dart';
 import 'package:flutter/foundation.dart';
 
 Future<void> showProfileDialog(BuildContext context) async {
@@ -82,13 +83,13 @@ Future<void> showProfileDialog(BuildContext context) async {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Edit Profile',
+                                'Edit Profile'.tr,
                                 style: theme.textTheme.titleLarge!.copyWith(
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                               Text(
-                                'Update your business information',
+                                'Update your business information'.tr,
                                 style: theme.textTheme.bodySmall!.copyWith(
                                   color: theme.hintColor,
                                 ),
@@ -113,7 +114,7 @@ Future<void> showProfileDialog(BuildContext context) async {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Company Logo',
+                              'Company Logo'.tr,
                               style: theme.textTheme.titleSmall!.copyWith(
                                 fontWeight: FontWeight.w600,
                               ),
@@ -343,7 +344,7 @@ Future<void> showProfileDialog(BuildContext context) async {
                             ),
                             const SizedBox(height: 20),
                             Text(
-                              'Bank Details',
+                              'Bank Details'.tr,
                               style: theme.textTheme.titleSmall!.copyWith(
                                 fontWeight: FontWeight.w600,
                                 color: theme.colorScheme.primary,
@@ -413,7 +414,7 @@ Future<void> showProfileDialog(BuildContext context) async {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            child: const Text('Cancel'),
+                            child: Text('Cancel'.tr),
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -492,7 +493,7 @@ Future<void> showProfileDialog(BuildContext context) async {
                                       color: theme.colorScheme.onPrimary,
                                     ),
                                   )
-                                : const Text('Save Changes'),
+                                : Text('Save Changes'.tr),
                           ),
                         ),
                       ],
@@ -524,8 +525,8 @@ Widget _buildInputField(
     maxLines: maxLines,
     keyboardType: keyboardType,
     decoration: InputDecoration(
-      labelText: label,
-      hintText: hint,
+      labelText: label.tr,
+      hintText: hint?.tr,
       prefixIcon: Icon(icon, size: 20),
     ),
     onChanged: onChanged,

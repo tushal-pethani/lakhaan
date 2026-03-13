@@ -20,7 +20,7 @@ class UpdateService {
 
   /// The version baked into the app at compile time.
   /// Must match the version in pubspec.yaml.
-  static const String currentVersion = '1.1.5';
+  static const String currentVersion = '1.1.6';
 
   /// Compares [a] and [b] as semver strings.
   /// Returns true if [b] is newer than [a].
