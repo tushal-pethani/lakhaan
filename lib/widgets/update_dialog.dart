@@ -89,7 +89,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
         _statusText = 'Download complete. Extracting...';
       });
 
-      // 3. Extract the zip using PowerShell (available on all modern Windows)
+      // 3. Extract the zip using PowerShell
       final extractResult = await Process.run('powershell', [
         '-NoProfile',
         '-Command',
@@ -104,60 +104,73 @@ class _UpdateDialogState extends State<UpdateDialog> {
 
       // 4. Get the current app directory
       final appDir = File(Platform.resolvedExecutable).parent.path;
+      final appExe = Platform.resolvedExecutable;
 
-      // 5. Create a batch script that will:
-      //    - Wait for this app to close
-      //    - Find the actual directory containing the new files (in case they are nested in the ZIP)
-      //    - Copy new files over old files
-      //    - Restart the app
-      //    - Clean up
-      final batPath = '${tempDir.path}\\billings_updater.bat';
-      final batContent = '''
-@echo off
-setlocal enabledelayedexpansion
-echo Lakhaan Updater - Installing v${widget.updateInfo.latestVersion}...
-echo Waiting for application to close...
-timeout /t 3 /nobreak >nul
+      // 5. Build a PowerShell script that:
+      //    - Waits for the app to exit
+      //    - Finds the actual content folder (handles nested zip structure)
+      //    - Copies all files to the app directory
+      //    - Restarts the app
+      //    - Cleans up
+      final ps1Path = '${tempDir.path}\\billings_updater.ps1';
 
-echo Locating extracted files...
-set "SOURCE_DIR=$extractDir"
-:: Automatically find the nested folder if the zip contains a single root folder (like Release/)
-for /d %%I in ("$extractDir\\*") do (
-    set "SOURCE_DIR=%%I"
-)
+      // Escape paths for PowerShell by using single-quoted strings
+      final ps1Content = r'''
+Start-Sleep -Seconds 3
+Write-Host "Lakhaan Updater - Installing...`n"
 
-echo Copying updated files from !SOURCE_DIR! to $appDir...
-xcopy /E /Y /Q "!SOURCE_DIR!\\*" "$appDir\\"
-if %ERRORLEVEL% NEQ 0 (
-  echo Update failed. Please download manually.
-  pause
-  exit /b 1
-)
+$ExtractDir = "''' + extractDir + r'''"
+$AppDir = "''' + appDir + r'''"
+$AppExe = "''' + appExe + r'''"
+$ZipPath = "''' + zipPath + r'''"
 
-echo Starting updated application...
-start "" "$appDir\\billings.exe"
+# Find the actual source folder:
+# If the zip had a single root folder inside (e.g. billings-windows-v1.1.8/),
+# use that folder as the source. Otherwise use the extract dir itself.
+$Children = Get-ChildItem -Path $ExtractDir
+$SourceDir = $ExtractDir
+if ($Children.Count -eq 1 -and $Children[0].PSIsContainer) {
+    $SourceDir = $Children[0].FullName
+}
 
-echo Cleaning up...
-rmdir /S /Q "$extractDir" 2>nul
-del "$zipPath" 2>nul
+Write-Host "Copying files from $SourceDir to $AppDir ..."
+try {
+    Copy-Item -Path "$SourceDir\*" -Destination "$AppDir\" -Recurse -Force -ErrorAction Stop
+    Write-Host "Files copied successfully."
+} catch {
+    Write-Host "ERROR: Failed to copy files: $_"
+    pause
+    exit 1
+}
 
-echo Update complete!
-timeout /t 2 /nobreak >nul
-del "%~f0"
+Write-Host "Starting updated application..."
+Start-Process -FilePath $AppExe
+
+Write-Host "Cleaning up..."
+Remove-Item -Path $ExtractDir -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item -Path $ZipPath -Force -ErrorAction SilentlyContinue
+
+Write-Host "Update complete!"
+Start-Sleep -Seconds 2
 ''';
 
-      await File(batPath).writeAsString(batContent);
+      await File(ps1Path).writeAsString(ps1Content);
 
       setState(() => _statusText = 'Launching updater and closing app...');
 
-      // 6. Launch the batch updater script
+      // 6. Launch the PowerShell updater in a new detached window
       await Process.start(
-        'cmd',
-        ['/c', 'start', '', '/min', batPath],
+        'powershell',
+        [
+          '-NoProfile',
+          '-ExecutionPolicy', 'Bypass',
+          '-File', ps1Path,
+        ],
         mode: ProcessStartMode.detached,
+        runInShell: false,
       );
 
-      // 7. Close the app so the batch script can replace files
+      // 7. Close this app so the script can copy files freely
       await Future.delayed(const Duration(milliseconds: 500));
       exit(0);
     } catch (e) {
