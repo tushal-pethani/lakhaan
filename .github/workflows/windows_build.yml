@@ -1,0 +1,66 @@
+name: Build Windows Application
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - app
+
+jobs:
+  build:
+    name: Build Windows App
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Create firebase_options.dart
+        shell: bash
+        env:
+          FIREBASE_OPTIONS_BASE64: ${{ secrets.FIREBASE_OPTIONS_BASE64 }}
+        run: |
+          if [ -z "$FIREBASE_OPTIONS_BASE64" ]; then
+            echo "Error: FIREBASE_OPTIONS_BASE64 secret is missing!"
+            exit 1
+          fi
+          echo "$FIREBASE_OPTIONS_BASE64" | base64 -d > lib/firebase_options.dart
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Build Windows Application
+        run: flutter build windows --release --dart-define=X_API_KEY="${{ secrets.X_API_KEY }}" --dart-define=X_API_SECRET="${{ secrets.X_API_SECRET }}" --dart-define=APP_SECRET_KEY="${{ secrets.APP_SECRET_KEY }}" --dart-define=TWILIO_SID="${{ secrets.TWILIO_SID }}" --dart-define=TWILIO_AUTH_TOKEN="${{ secrets.TWILIO_AUTH_TOKEN }}" --dart-define=TWILIO_FROM="${{ secrets.TWILIO_FROM }}"
+
+      - name: Bundle VC++ Runtime DLLs
+        shell: bash
+        run: |
+          RELEASE_DIR="build/windows/x64/runner/Release"
+          VS_REDIST="/c/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Redist/MSVC"
+          LATEST_DIR=$(ls -d "$VS_REDIST"/*/x64/Microsoft.VC*.CRT 2>/dev/null | head -1)
+          if [ -d "$LATEST_DIR" ]; then
+            cp "$LATEST_DIR/vcruntime140.dll" "$RELEASE_DIR/" 2>/dev/null || true
+            cp "$LATEST_DIR/vcruntime140_1.dll" "$RELEASE_DIR/" 2>/dev/null || true
+            cp "$LATEST_DIR/msvcp140.dll" "$RELEASE_DIR/" 2>/dev/null || true
+            echo "Bundled VC++ runtime DLLs from: $LATEST_DIR"
+          else
+            echo "Warning: Could not find VC++ Redist directory. Trying System32..."
+            cp /c/Windows/System32/vcruntime140.dll "$RELEASE_DIR/" 2>/dev/null || true
+            cp /c/Windows/System32/vcruntime140_1.dll "$RELEASE_DIR/" 2>/dev/null || true
+            cp /c/Windows/System32/msvcp140.dll "$RELEASE_DIR/" 2>/dev/null || true
+          fi
+          echo "Files in Release folder:"
+          ls -la "$RELEASE_DIR/"
+
+      - name: Upload Windows Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: billings-windows-app
+          path: build/windows/x64/runner/Release/
+          retention-days: 7
