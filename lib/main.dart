@@ -123,9 +123,8 @@ class _AuthGateState extends State<_AuthGate> {
 
   String _emailKey(String email) => Uri.encodeComponent(email.trim().toLowerCase());
 
-  Future<void> _ensureStoreFor(User user) async {
-    final email = user.email;
-    if (email == null || email.isEmpty) return;
+  Future<void> _ensureStoreForEmail(String email) async {
+    if (email.isEmpty) return;
     final key = _emailKey(email);
     if (_initializedEmailKey == key) return;
     if (_initializingStore) return;
@@ -142,7 +141,7 @@ class _AuthGateState extends State<_AuthGate> {
               .timeout(const Duration(seconds: 10));
           if (profileData != null) {
             AppDataStore.instance.profile = StoredProfile(
-              name: profileData['name'] as String? ?? '',
+              name: profileData['name'] as String? ?? 'Default User',
               email: profileData['email'] as String? ?? email,
               businessName: profileData['name'] as String? ?? 'Business',
               address: profileData['address'] as String? ?? '',
@@ -157,9 +156,32 @@ class _AuthGateState extends State<_AuthGate> {
               ifscCode: profileData['ifscCode'] as String?,
               companyLogoBase64: profileData['companyLogoBase64'] as String?,
             );
+          } else {
+             AppDataStore.instance.profile = StoredProfile(
+                name: 'Default User',
+                email: email,
+                businessName: 'Business',
+                address: '',
+                city: '',
+                state: '',
+                pincode: '',
+                phone: '',
+                gstNumber: '',
+            );
           }
         } catch (e) {
           debugPrint('Failed to load profile from Firestore: $e');
+           AppDataStore.instance.profile = StoredProfile(
+              name: 'Default User',
+              email: email,
+              businessName: 'Business',
+              address: '',
+              city: '',
+              state: '',
+              pincode: '',
+              phone: '',
+              gstNumber: '',
+          );
         }
 
         await AppDataStore.instance.init(key)
@@ -183,62 +205,28 @@ class _AuthGateState extends State<_AuthGate> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _ensureStoreForEmail('default@lakhaan.com');
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
+    if (_initializingStore && _initializedEmailKey == null) {
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              CircularProgressIndicator(),
+              SizedBox(height: 24),
+              Text('Bypassing login and loading default user data...'),
+            ],
+          ),
+        ),
+      );
+    }
 
-        if (snapshot.hasError) {
-          return Scaffold(
-            body: Center(
-              child: Text('Error: ${snapshot.error}'),
-            ),
-          );
-        }
-
-        final user = snapshot.data;
-        if (user == null) {
-          return const HomeScreen(isLoggedIn: false);
-        }
-
-        _ensureStoreFor(user);
-
-        if (_initializingStore && _initializedEmailKey == null) {
-          return Scaffold(
-            body: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const CircularProgressIndicator(),
-                  const SizedBox(height: 24),
-                  const Text('Loading your data...'),
-                  const SizedBox(height: 16),
-                  TextButton.icon(
-                    icon: const Icon(Icons.logout),
-                    label: const Text('Sign Out'),
-                    onPressed: () async {
-                      await FirebaseAuth.instance.signOut();
-                      if (mounted) {
-                        setState(() {
-                          _initializedEmailKey = null;
-                          _initializingStore = false;
-                        });
-                      }
-                    },
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
-
-        return const HomeScreen(isLoggedIn: true);
-      },
-    );
+    return const HomeScreen(isLoggedIn: true);
   }
 }
