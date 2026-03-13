@@ -58,9 +58,39 @@ jobs:
           echo "Files in Release folder:"
           ls -la "$RELEASE_DIR/"
 
+      - name: Extract version from pubspec.yaml
+        id: version
+        shell: bash
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | sed 's/+.*//')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Detected version: $VERSION"
+
+      - name: Create release zip
+        shell: bash
+        run: |
+          cd build/windows/x64/runner/Release
+          7z a -tzip ../../../../../billings-windows-v${{ steps.version.outputs.version }}.zip .
+
       - name: Upload Windows Build Artifact
         uses: actions/upload-artifact@v4
         with:
           name: billings-windows-app
           path: build/windows/x64/runner/Release/
           retention-days: 7
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: Lakhaan v${{ steps.version.outputs.version }}
+          body: |
+            ## Lakhaan v${{ steps.version.outputs.version }}
+
+            ### Windows Desktop Application
+            Download the zip file below, extract it, and run `billings.exe`.
+          files: billings-windows-v${{ steps.version.outputs.version }}.zip
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
