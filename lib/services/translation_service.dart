@@ -237,6 +237,117 @@ class TranslationService {
       'gu': 'ફેરફારો સાચવો',
       'hi': 'परिवर्तन सहेजें',
     },
+    // Invoice Form
+    'Select Client': {
+      'en': 'Select Client',
+      'gu': 'ગ્રાહક પસંદ કરો',
+      'hi': 'ग्राहक चुनें',
+    },
+    'Invoice Number': {
+      'en': 'Invoice Number',
+      'gu': 'બિલ નંબર',
+      'hi': 'इनवॉइस नंबर',
+    },
+    'Invoice Date': {
+      'en': 'Invoice Date',
+      'gu': 'બિલની તારીખ',
+      'hi': 'इनवॉइस की तारीख',
+    },
+    'Invoice Theme': {
+      'en': 'Invoice Theme',
+      'gu': 'બિલની થીમ',
+      'hi': 'इनवॉइस थीम',
+    },
+    'Items': {
+      'en': 'Items',
+      'gu': 'વસ્તુઓ',
+      'hi': 'आइटम',
+    },
+    'Add Item': {
+      'en': 'Add Item',
+      'gu': 'વસ્તુ ઉમેરો',
+      'hi': 'आइटम जोड़ें',
+    },
+    'Subtotal': {
+      'en': 'Subtotal',
+      'gu': 'પેટા સરવાળો',
+      'hi': 'उप-कुल',
+    },
+    'Discount (%)': {
+      'en': 'Discount (%)',
+      'gu': 'ડિસ્કાઉન્ટ (%)',
+      'hi': 'छूट (%)',
+    },
+    'Tax Amount': {
+      'en': 'Tax Amount',
+      'gu': 'ટેક્સ રકમ',
+      'hi': 'कर की राशि',
+    },
+    'Total Amount': {
+      'en': 'Total Amount',
+      'gu': 'કુલ રકમ',
+      'hi': 'कुल राशि',
+    },
+    'Classic Blue': {
+      'en': 'Classic Blue',
+      'gu': 'ક્લાસિક બ્લુ',
+      'hi': 'क्लासिक ब्लू',
+    },
+    'Modern Green': {
+      'en': 'Modern Green',
+      'gu': 'મોડર્ન ગ્રીન',
+      'hi': 'मॉडर्न ग्रीन',
+    },
+    'Professional Dark': {
+      'en': 'Professional Dark',
+      'gu': 'પ્રોફેશનલ ડાર્ક',
+      'hi': 'प्रोफेशनल डार्क',
+    },
+    'Plain White': {
+      'en': 'Plain White',
+      'gu': 'પ્લેન વ્હાઇટ',
+      'hi': 'सादा सफेद',
+    },
+    'Royal Purple': {
+      'en': 'Royal Purple',
+      'gu': 'રોયલ પર્પલ',
+      'hi': 'रૌયલ પર્પલ',
+    },
+    'Sunset Orange': {
+      'en': 'Sunset Orange',
+      'gu': 'સનસેટ ઓરેન્જ',
+      'hi': 'सनसेट ऑरेंज',
+    },
+    'Ocean Blue': {
+      'en': 'Ocean Blue',
+      'gu': 'ઓશન બ્લુ',
+      'hi': 'ओशन ब्लू',
+    },
+    'Ruby Red': {
+      'en': 'Ruby Red',
+      'gu': 'રૂબી રેડ',
+      'hi': 'रुबी रेड',
+    },
+    'Invoice created': {
+      'en': 'Invoice created',
+      'gu': 'બિલ બનાવવામાં આવ્યું',
+      'hi': 'इनवॉइस बनाया गया',
+    },
+    'Invoice updated': {
+      'en': 'Invoice updated',
+      'gu': 'બિલ અપડેટ કરવામાં આવ્યું',
+      'hi': 'इनवॉइस अपडेट किया गया',
+    },
+    'Invoice deleted': {
+      'en': 'Invoice deleted',
+      'gu': 'બિલ કાઢી નાખવામાં આવ્યું',
+      'hi': 'इनवॉइस हटा दिया गया',
+    },
+    'Client deleted': {
+      'en': 'Client deleted',
+      'gu': 'ગ્રાહકને કાઢી નાખવામાં આવ્યો',
+      'hi': 'ग्राहक हटा दिया गया',
+    },
   };
 
   String translate(String key) {
