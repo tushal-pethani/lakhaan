@@ -328,29 +328,42 @@ class AppDataStore {
 
     Directory? root;
 
-    // Prefer system-wide /Library, but fall back to user Library if
-    // permissions are insufficient.
-    try {
-      root = Directory('/Library/Application Support/lakhaanData');
+    if (Platform.isWindows) {
+      // On Windows, use %APPDATA%/lakhaanData
+      final appData = Platform.environment['APPDATA'] ?? '';
+      if (appData.isNotEmpty) {
+        root = Directory('$appData/lakhaanData');
+      } else {
+        root = Directory('lakhaanData');
+      }
       if (!await root.exists()) {
         await root.create(recursive: true);
       }
-    } catch (_) {
-      root = null;
-    }
-
-    if (root == null) {
+    } else {
+      // macOS / Linux: Prefer system-wide /Library, but fall back to user Library if
+      // permissions are insufficient.
       try {
-        final home = Platform.environment['HOME'] ?? '';
-        root = Directory('$home/Library/Application Support/lakhaanData');
+        root = Directory('/Library/Application Support/lakhaanData');
         if (!await root.exists()) {
           await root.create(recursive: true);
         }
       } catch (_) {
-        // As a last resort, use the app's current directory.
-        root = Directory('lakhaanData');
-        if (!await root.exists()) {
-          await root.create(recursive: true);
+        root = null;
+      }
+
+      if (root == null) {
+        try {
+          final home = Platform.environment['HOME'] ?? '';
+          root = Directory('$home/Library/Application Support/lakhaanData');
+          if (!await root.exists()) {
+            await root.create(recursive: true);
+          }
+        } catch (_) {
+          // As a last resort, use the app's current directory.
+          root = Directory('lakhaanData');
+          if (!await root.exists()) {
+            await root.create(recursive: true);
+          }
         }
       }
     }
