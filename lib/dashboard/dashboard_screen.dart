@@ -806,10 +806,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               Padding(
                                 padding: const EdgeInsets.only(left: 36),
                                 child: TextField(
-                                  decoration: const InputDecoration(
+                                  decoration: InputDecoration(
                                     hintText: 'Search invoices...'.tr,
                                     isDense: true,
-                                    border: OutlineInputBorder(),
+                                    border: const OutlineInputBorder(),
                                   ),
                                   textAlignVertical: TextAlignVertical.center,
                                   onChanged: (v) {
