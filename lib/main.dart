@@ -126,9 +126,11 @@ class _AuthGateState extends State<_AuthGate> {
       setState(() => _initializingStore = true);
       
       try {
-        // Load profile from Firestore on all platforms
+        // Load profile from Firestore with a timeout to prevent hanging
         try {
-          final profileData = await FirestoreService.instance.getProfile();
+          final profileData = await FirestoreService.instance
+              .getProfile()
+              .timeout(const Duration(seconds: 10));
           if (profileData != null) {
             AppDataStore.instance.profile = StoredProfile(
               name: profileData['name'] as String? ?? '',
@@ -151,7 +153,8 @@ class _AuthGateState extends State<_AuthGate> {
           debugPrint('Failed to load profile from Firestore: $e');
         }
 
-        await AppDataStore.instance.init(key);
+        await AppDataStore.instance.init(key)
+            .timeout(const Duration(seconds: 5));
         
         AppTheme.themeMode.value =
             AppDataStore.instance.settings.themeMode == 'dark'
@@ -197,8 +200,31 @@ class _AuthGateState extends State<_AuthGate> {
         _ensureStoreFor(user);
 
         if (_initializingStore && _initializedEmailKey == null) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+          return Scaffold(
+            body: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 24),
+                  const Text('Loading your data...'),
+                  const SizedBox(height: 16),
+                  TextButton.icon(
+                    icon: const Icon(Icons.logout),
+                    label: const Text('Sign Out'),
+                    onPressed: () async {
+                      await FirebaseAuth.instance.signOut();
+                      if (mounted) {
+                        setState(() {
+                          _initializedEmailKey = null;
+                          _initializingStore = false;
+                        });
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
           );
         }
 

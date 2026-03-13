@@ -317,12 +317,12 @@ class AppDataStore {
   Future<void> init(String username) async {
     _username = username.isEmpty ? 'defaultUser' : username;
 
-    // Check if running on web (kIsWeb from foundation)
-    if (kIsWeb) {
-      // For web, use in-memory storage (no local persistence)
-      // Data will be lost on refresh - but Firebase auth works
+    // Check if running on web or Windows desktop
+    // On these platforms, use in-memory storage only.
+    // All data syncs via Firestore, so local encrypted files aren't needed.
+    if (kIsWeb || Platform.isWindows) {
       _baseDir = null;
-      debugPrint('Running on web - using in-memory storage');
+      debugPrint('Running on ${kIsWeb ? "web" : "Windows"} - using in-memory storage');
       return;
     }
 
