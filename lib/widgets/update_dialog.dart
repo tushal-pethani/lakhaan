@@ -1,10 +1,13 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 
 import '../services/update_service.dart';
 
-/// A mandatory, non-dismissable dialog that forces the user to update.
-class UpdateDialog extends StatelessWidget {
+/// A mandatory, non-dismissable dialog that downloads and installs updates in-app.
+class UpdateDialog extends StatefulWidget {
   final UpdateInfo updateInfo;
 
   const UpdateDialog({super.key, required this.updateInfo});
@@ -19,11 +22,151 @@ class UpdateDialog extends StatelessWidget {
   }
 
   @override
+  State<UpdateDialog> createState() => _UpdateDialogState();
+}
+
+class _UpdateDialogState extends State<UpdateDialog> {
+  bool _downloading = false;
+  double _progress = 0.0;
+  String _statusText = '';
+  String? _errorText;
+
+  Future<void> _downloadAndInstall() async {
+    setState(() {
+      _downloading = true;
+      _progress = 0.0;
+      _statusText = 'Preparing download...';
+      _errorText = null;
+    });
+
+    try {
+      // 1. Get temp directory for download
+      final tempDir = await getTemporaryDirectory();
+      final zipPath = '${tempDir.path}\\billings_update.zip';
+      final extractDir = '${tempDir.path}\\billings_update';
+
+      // Clean up any previous download
+      final zipFile = File(zipPath);
+      if (await zipFile.exists()) await zipFile.delete();
+      final extractDirObj = Directory(extractDir);
+      if (await extractDirObj.exists()) await extractDirObj.delete(recursive: true);
+
+      // 2. Download the zip with progress
+      setState(() => _statusText = 'Connecting to server...');
+
+      final request = http.Request('GET', Uri.parse(widget.updateInfo.downloadUrl));
+      final response = await http.Client().send(request);
+
+      if (response.statusCode != 200) {
+        throw Exception('Download failed with status ${response.statusCode}');
+      }
+
+      final totalBytes = response.contentLength ?? 0;
+      int receivedBytes = 0;
+      final sink = zipFile.openWrite();
+
+      await for (final chunk in response.stream) {
+        sink.add(chunk);
+        receivedBytes += chunk.length;
+        if (totalBytes > 0) {
+          setState(() {
+            _progress = receivedBytes / totalBytes;
+            final mb = (receivedBytes / (1024 * 1024)).toStringAsFixed(1);
+            final totalMb = (totalBytes / (1024 * 1024)).toStringAsFixed(1);
+            _statusText = 'Downloading... $mb MB / $totalMb MB';
+          });
+        } else {
+          setState(() {
+            final mb = (receivedBytes / (1024 * 1024)).toStringAsFixed(1);
+            _statusText = 'Downloading... $mb MB';
+          });
+        }
+      }
+
+      await sink.close();
+      setState(() {
+        _progress = 1.0;
+        _statusText = 'Download complete. Extracting...';
+      });
+
+      // 3. Extract the zip using PowerShell (available on all modern Windows)
+      final extractResult = await Process.run('powershell', [
+        '-NoProfile',
+        '-Command',
+        'Expand-Archive -Path "$zipPath" -DestinationPath "$extractDir" -Force',
+      ]);
+
+      if (extractResult.exitCode != 0) {
+        throw Exception('Extraction failed: ${extractResult.stderr}');
+      }
+
+      setState(() => _statusText = 'Installing update...');
+
+      // 4. Get the current app directory
+      final appDir = File(Platform.resolvedExecutable).parent.path;
+
+      // 5. Create a batch script that will:
+      //    - Wait for this app to close
+      //    - Copy new files over old files
+      //    - Restart the app
+      //    - Clean up
+      final batPath = '${tempDir.path}\\billings_updater.bat';
+      final batContent = '''
+@echo off
+echo Lakhaan Updater - Installing v${widget.updateInfo.latestVersion}...
+echo Waiting for application to close...
+timeout /t 3 /nobreak >nul
+
+echo Copying updated files...
+xcopy /E /Y /Q "$extractDir\\*" "$appDir\\"
+if %ERRORLEVEL% NEQ 0 (
+  echo Update failed. Please download manually.
+  pause
+  exit /b 1
+)
+
+echo Starting updated application...
+start "" "$appDir\\billings.exe"
+
+echo Cleaning up...
+rmdir /S /Q "$extractDir" 2>nul
+del "$zipPath" 2>nul
+
+echo Update complete!
+timeout /t 2 /nobreak >nul
+del "%~f0"
+''';
+
+      await File(batPath).writeAsString(batContent);
+
+      setState(() => _statusText = 'Launching updater and closing app...');
+
+      // 6. Launch the batch updater script
+      await Process.start(
+        'cmd',
+        ['/c', 'start', '', '/min', batPath],
+        mode: ProcessStartMode.detached,
+      );
+
+      // 7. Close the app so the batch script can replace files
+      await Future.delayed(const Duration(milliseconds: 500));
+      exit(0);
+    } catch (e) {
+      debugPrint('Update error: $e');
+      setState(() {
+        _downloading = false;
+        _errorText = 'Update failed: $e';
+        _statusText = '';
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return PopScope(
-      canPop: false, // Prevent back button dismiss
+      canPop: false,
       child: AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         contentPadding: EdgeInsets.zero,
@@ -55,16 +198,16 @@ class UpdateDialog extends StatelessWidget {
                         color: Colors.white.withOpacity(0.2),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
-                        Icons.system_update_alt_rounded,
+                      child: Icon(
+                        _downloading ? Icons.downloading_rounded : Icons.system_update_alt_rounded,
                         size: 36,
                         color: Colors.white,
                       ),
                     ),
                     const SizedBox(height: 14),
-                    const Text(
-                      'Update Required',
-                      style: TextStyle(
+                    Text(
+                      _downloading ? 'Updating...' : 'Update Required',
+                      style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
@@ -72,7 +215,7 @@ class UpdateDialog extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'Version ${updateInfo.latestVersion} is available',
+                      'Version ${widget.updateInfo.latestVersion} is available',
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.white.withOpacity(0.9),
@@ -116,7 +259,7 @@ class UpdateDialog extends StatelessWidget {
                                 Text('Latest', style: theme.textTheme.bodySmall!.copyWith(color: theme.hintColor)),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'v${updateInfo.latestVersion}',
+                                  'v${widget.updateInfo.latestVersion}',
                                   style: theme.textTheme.titleMedium!.copyWith(
                                     fontWeight: FontWeight.bold,
                                     color: Colors.green,
@@ -128,15 +271,70 @@ class UpdateDialog extends StatelessWidget {
                         ],
                       ),
                     ),
-                    
+
                     // Release notes
-                    if (updateInfo.releaseNotes.isNotEmpty) ...[
+                    if (!_downloading && widget.updateInfo.releaseNotes.isNotEmpty) ...[
                       const SizedBox(height: 16),
                       Text("What's New", style: theme.textTheme.titleSmall!.copyWith(fontWeight: FontWeight.w600)),
                       const SizedBox(height: 6),
                       Text(
-                        updateInfo.releaseNotes,
+                        widget.updateInfo.releaseNotes,
                         style: theme.textTheme.bodyMedium!.copyWith(color: theme.hintColor),
+                      ),
+                    ],
+
+                    // Download progress
+                    if (_downloading) ...[
+                      const SizedBox(height: 20),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: LinearProgressIndicator(
+                          value: _progress > 0 ? _progress : null,
+                          minHeight: 8,
+                          backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        _statusText,
+                        style: theme.textTheme.bodySmall!.copyWith(color: theme.hintColor),
+                        textAlign: TextAlign.center,
+                      ),
+                      if (_progress > 0) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          '${(_progress * 100).toStringAsFixed(0)}%',
+                          style: theme.textTheme.titleMedium!.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.primary,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ],
+
+                    // Error message
+                    if (_errorText != null) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.red.withOpacity(0.3)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.error_outline, color: Colors.red, size: 20),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _errorText!,
+                                style: theme.textTheme.bodySmall!.copyWith(color: Colors.red),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ],
@@ -149,14 +347,18 @@ class UpdateDialog extends StatelessWidget {
                 child: SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
-                    onPressed: () async {
-                      final uri = Uri.parse(updateInfo.downloadUrl);
-                      if (await canLaunchUrl(uri)) {
-                        await launchUrl(uri, mode: LaunchMode.externalApplication);
-                      }
-                    },
-                    icon: const Icon(Icons.download_rounded),
-                    label: const Text('Update Now', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                    onPressed: _downloading ? null : _downloadAndInstall,
+                    icon: _downloading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          )
+                        : const Icon(Icons.download_rounded),
+                    label: Text(
+                      _downloading ? 'Updating...' : (_errorText != null ? 'Retry Update' : 'Update Now'),
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    ),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
