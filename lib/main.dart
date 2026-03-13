@@ -125,43 +125,47 @@ class _AuthGateState extends State<_AuthGate> {
       if (!mounted) return;
       setState(() => _initializingStore = true);
       
-      // Load profile from Firestore on all platforms
       try {
-        final profileData = await FirestoreService.instance.getProfile();
-        if (profileData != null) {
-          AppDataStore.instance.profile = StoredProfile(
-            name: profileData['name'] as String? ?? '',
-            email: profileData['email'] as String? ?? email,
-            businessName: profileData['name'] as String? ?? 'Business',
-            address: profileData['address'] as String? ?? '',
-            city: profileData['city'] as String? ?? '',
-            state: profileData['state'] as String? ?? '',
-            pincode: profileData['pincode'] as String? ?? '',
-            phone: profileData['phone'] as String? ?? '',
-            gstNumber: profileData['gstNumber'] as String? ?? '',
-            panNumber: profileData['panNumber'] as String?,
-            bankName: profileData['bankName'] as String?,
-            accountNumber: profileData['accountNumber'] as String?,
-            ifscCode: profileData['ifscCode'] as String?,
-            companyLogoBase64: profileData['companyLogoBase64'] as String?,
-          );
+        // Load profile from Firestore on all platforms
+        try {
+          final profileData = await FirestoreService.instance.getProfile();
+          if (profileData != null) {
+            AppDataStore.instance.profile = StoredProfile(
+              name: profileData['name'] as String? ?? '',
+              email: profileData['email'] as String? ?? email,
+              businessName: profileData['name'] as String? ?? 'Business',
+              address: profileData['address'] as String? ?? '',
+              city: profileData['city'] as String? ?? '',
+              state: profileData['state'] as String? ?? '',
+              pincode: profileData['pincode'] as String? ?? '',
+              phone: profileData['phone'] as String? ?? '',
+              gstNumber: profileData['gstNumber'] as String? ?? '',
+              panNumber: profileData['panNumber'] as String?,
+              bankName: profileData['bankName'] as String?,
+              accountNumber: profileData['accountNumber'] as String?,
+              ifscCode: profileData['ifscCode'] as String?,
+              companyLogoBase64: profileData['companyLogoBase64'] as String?,
+            );
+          }
+        } catch (e) {
+          debugPrint('Failed to load profile from Firestore: $e');
         }
-      } catch (e) {
-        debugPrint('Failed to load profile from Firestore: $e');
-      }
 
-      await AppDataStore.instance.init(key);
-      
-      AppTheme.themeMode.value =
-          AppDataStore.instance.settings.themeMode == 'dark'
-              ? ThemeMode.dark
-              : ThemeMode.light;
-              
-      if (mounted) {
-        setState(() {
-          _initializedEmailKey = key;
-          _initializingStore = false;
-        });
+        await AppDataStore.instance.init(key);
+        
+        AppTheme.themeMode.value =
+            AppDataStore.instance.settings.themeMode == 'dark'
+                ? ThemeMode.dark
+                : ThemeMode.light;
+      } catch (e) {
+        debugPrint('Error during store initialization: $e');
+      } finally {
+        if (mounted) {
+          setState(() {
+            _initializedEmailKey = key;
+            _initializingStore = false;
+          });
+        }
       }
     });
   }
