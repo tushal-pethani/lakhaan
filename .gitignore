@@ -46,9 +46,9 @@ app.*.map.json
 .env
 functions/.env
 
+# Node modules
+node_modules/
+functions/node_modules/
+
 # Firebase configs
 lib/firebase_options.dart
-android/app/google-services.json
-ios/Runner/GoogleService-Info.plist
-macos/Runner/GoogleService-Info.plist
-functions/node_modules
