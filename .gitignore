@@ -50,5 +50,4 @@ functions/.env
 node_modules/
 functions/node_modules/
 
-# Firebase configs
-lib/firebase_options.dart
+# Firebase configs (keep tracked for local builds)
