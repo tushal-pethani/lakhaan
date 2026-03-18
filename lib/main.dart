@@ -12,12 +12,11 @@ import 'home_screen.dart';
 import 'firebase_options.dart';
 import 'login/login_screen.dart';
 import 'services/firestore_service.dart';
-import 'services/update_service.dart';
+import 'services/auto_updater_service.dart';
 import 'services/translation_service.dart';
 import 'storage/app_data_store.dart';
 import 'theme/app_theme.dart';
 import 'invoices/public_invoice_screen.dart';
-import 'widgets/update_dialog.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 
 Future<void> main() async {
@@ -46,16 +45,20 @@ Future<void> main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    
+
     // The Firestore C++ SDK persistence engine hangs on Windows, causing infinite loading.
     // Disabling it fixes the issue.
     if (!kIsWeb && Platform.isWindows) {
-      debugPrint('--- [DEBUG] disabling Firestore persistence & enabling logs ---');
+      debugPrint(
+        '--- [DEBUG] disabling Firestore persistence & enabling logs ---',
+      );
       FirebaseFirestore.instance.settings = const Settings(
         persistenceEnabled: false,
       );
       FirebaseFirestore.setLoggingEnabled(true);
-      debugPrint('--- [DEBUG] Firestore persistence disabled & logs enabled ---');
+      debugPrint(
+        '--- [DEBUG] Firestore persistence disabled & logs enabled ---',
+      );
     }
   } catch (e) {
     debugPrint('Firebase init error: $e');
@@ -67,10 +70,11 @@ Future<void> main() async {
     debugPrint('AppDataStore init error: $e');
   }
 
-  AppTheme.themeMode.value =
-      AppDataStore.instance.settings.themeMode == 'dark'
-          ? ThemeMode.dark
-          : ThemeMode.light;
+  await AutoUpdaterService.instance.initialize();
+
+  AppTheme.themeMode.value = AppDataStore.instance.settings.themeMode == 'dark'
+      ? ThemeMode.dark
+      : ThemeMode.light;
 
   runApp(const MyApp());
 }
@@ -95,14 +99,18 @@ class MyApp extends StatelessWidget {
               initialRoute: '/',
               onGenerateRoute: (settings) {
                 // Handle /invoice/:userId/:invoiceId
-                if (settings.name != null && settings.name!.startsWith('/invoice/')) {
+                if (settings.name != null &&
+                    settings.name!.startsWith('/invoice/')) {
                   final segments = settings.name!.split('/');
                   // segments will be ['', 'invoice', 'userId', 'invoiceId']
                   if (segments.length >= 4) {
                     final userId = segments[2];
                     final invoiceId = segments[3];
                     return MaterialPageRoute(
-                      builder: (context) => PublicInvoiceScreen(userId: userId, invoiceId: invoiceId),
+                      builder: (context) => PublicInvoiceScreen(
+                        userId: userId,
+                        invoiceId: invoiceId,
+                      ),
                       settings: settings,
                     );
                   }
@@ -110,10 +118,10 @@ class MyApp extends StatelessWidget {
                 return null; // Let standard routes handle everything else
               },
               routes: {
-            '/': (_) => const _AuthGate(),
-            '/clients': (_) => const ClientsScreen(),
-            '/dashboard': (_) => const DashboardScreen(),
-          },
+                '/': (_) => const _AuthGate(),
+                '/clients': (_) => const ClientsScreen(),
+                '/dashboard': (_) => const DashboardScreen(),
+              },
             );
           },
         );
@@ -165,9 +173,9 @@ class _StoreInitializerState extends State<_StoreInitializer> {
   String? _initializedEmailKey;
   bool _initializingStore = false;
   String _loadingStep = 'Initializing...';
-  bool _updateChecked = false;
 
-  String _emailKey(String email) => Uri.encodeComponent(email.trim().toLowerCase());
+  String _emailKey(String email) =>
+      Uri.encodeComponent(email.trim().toLowerCase());
 
   Future<void> _ensureStoreForEmail(String email) async {
     if (email.isEmpty) return;
@@ -182,11 +190,11 @@ class _StoreInitializerState extends State<_StoreInitializer> {
         _initializingStore = true;
         _loadingStep = 'Starting store initialization...';
       });
-      
+
       try {
         debugPrint('--- [DEBUG] Fetching Firestore profile... ---');
         setState(() => _loadingStep = 'Fetching profile from Firestore...');
-        
+
         try {
           final profileData = await FirestoreService.instance
               .getProfile()
@@ -195,7 +203,9 @@ class _StoreInitializerState extends State<_StoreInitializer> {
             AppDataStore.instance.profile = StoredProfile(
               name: profileData['name'] as String? ?? 'Default User',
               email: profileData['email'] as String? ?? email,
-              businessName: profileData['businessName'] as String? ?? (profileData['name'] as String? ?? 'Business'),
+              businessName:
+                  profileData['businessName'] as String? ??
+                  (profileData['name'] as String? ?? 'Business'),
               address: profileData['address'] as String? ?? '',
               city: profileData['city'] as String? ?? '',
               state: profileData['state'] as String? ?? '',
@@ -209,21 +219,7 @@ class _StoreInitializerState extends State<_StoreInitializer> {
               companyLogoBase64: profileData['companyLogoBase64'] as String?,
             );
           } else {
-             AppDataStore.instance.profile = StoredProfile(
-                name: 'User',
-                email: email,
-                businessName: 'Business',
-                address: '',
-                city: '',
-                state: '',
-                pincode: '',
-                phone: '',
-                gstNumber: '',
-            );
-          }
-        } catch (e) {
-          debugPrint('Failed to load profile from Firestore: $e');
-           AppDataStore.instance.profile = StoredProfile(
+            AppDataStore.instance.profile = StoredProfile(
               name: 'User',
               email: email,
               businessName: 'Business',
@@ -233,49 +229,54 @@ class _StoreInitializerState extends State<_StoreInitializer> {
               pincode: '',
               phone: '',
               gstNumber: '',
+            );
+          }
+        } catch (e) {
+          debugPrint('Failed to load profile from Firestore: $e');
+          AppDataStore.instance.profile = StoredProfile(
+            name: 'User',
+            email: email,
+            businessName: 'Business',
+            address: '',
+            city: '',
+            state: '',
+            pincode: '',
+            phone: '',
+            gstNumber: '',
           );
         }
 
         setState(() => _loadingStep = 'Initializing local database...');
-        debugPrint('--- [DEBUG] Calling AppDataStore.instance.init(key)... ---');
-        await AppDataStore.instance.init(key)
+        debugPrint(
+          '--- [DEBUG] Calling AppDataStore.instance.init(key)... ---',
+        );
+        await AppDataStore.instance
+            .init(key)
             .timeout(const Duration(seconds: 5));
         debugPrint('--- [DEBUG] AppDataStore.instance.init(key) finished ---');
-        
+
         setState(() => _loadingStep = 'Applying theme...');
         AppTheme.themeMode.value =
             AppDataStore.instance.settings.themeMode == 'dark'
-                ? ThemeMode.dark
-                : ThemeMode.light;
-        TranslationService.instance.setLanguage(AppDataStore.instance.settings.languageCode);
+            ? ThemeMode.dark
+            : ThemeMode.light;
+        TranslationService.instance.setLanguage(
+          AppDataStore.instance.settings.languageCode,
+        );
       } catch (e) {
         debugPrint('Error during store initialization: $e');
       } finally {
-        debugPrint('--- [DEBUG] _ensureStoreForEmail microtask finally block ---');
+        debugPrint(
+          '--- [DEBUG] _ensureStoreForEmail microtask finally block ---',
+        );
         if (mounted) {
           setState(() {
             _initializedEmailKey = key;
             _initializingStore = false;
           });
-
-          // Check for updates after store is initialized
-          _checkForUpdate();
         }
       }
     });
-  }
-
-  Future<void> _checkForUpdate() async {
-    if (_updateChecked) return;
-    _updateChecked = true;
-    try {
-      final updateInfo = await UpdateService.instance.checkForUpdate();
-      if (updateInfo != null && mounted) {
-        UpdateDialog.show(context, updateInfo);
-      }
-    } catch (e) {
-      debugPrint('Update check error: $e');
-    }
   }
 
   @override
@@ -306,7 +307,10 @@ class _StoreInitializerState extends State<_StoreInitializer> {
               const SizedBox(height: 8),
               Text(
                 'Current Step: $_loadingStep',
-                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue,
+                ),
               ),
             ],
           ),

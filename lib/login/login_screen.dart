@@ -12,6 +12,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../auth/auth_service.dart';
 import '../services/translation_service.dart';
 import '../storage/app_data_store.dart';
+import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -176,9 +177,9 @@ class _LoginScreenState extends State<LoginScreen> {
         const SnackBar(content: Text('GST Number verified successfully!')),
       );
     } catch (_) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('GST verification failed')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('GST verification failed')));
     }
     setState(() {
       verifying = false;
@@ -207,7 +208,9 @@ class _LoginScreenState extends State<LoginScreen> {
     );
 
     // Initialize local store using email-keyed folder, then keep profile locally.
-    await AppDataStore.instance.init(AuthService.instance.emailKey(profile.email));
+    await AppDataStore.instance.init(
+      AuthService.instance.emailKey(profile.email),
+    );
     AppDataStore.instance.profile = StoredProfile(
       name: profile.name,
       email: profile.email,
@@ -252,8 +255,9 @@ class _LoginScreenState extends State<LoginScreen> {
         phone: phone.trim(),
         gstNumber: gstNumber.trim(),
         bankName: bankName.trim().isEmpty ? null : bankName.trim(),
-        accountNumber:
-            accountNumber.trim().isEmpty ? null : accountNumber.trim(),
+        accountNumber: accountNumber.trim().isEmpty
+            ? null
+            : accountNumber.trim(),
         ifscCode: ifscCode.trim().isEmpty ? null : ifscCode.trim(),
         companyLogoBase64: companyLogoBase64,
       );
@@ -293,18 +297,18 @@ class _LoginScreenState extends State<LoginScreen> {
       } else {
         await _login(email, password);
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Welcome back!')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Welcome back!')));
         Navigator.of(context).pushReplacementNamed('/');
       }
     } catch (e, st) {
       // ignore: avoid_print
       print('Auth submit error: $e\n$st');
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_friendlyError(e))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_friendlyError(e))));
     }
     if (mounted) {
       setState(() {
@@ -352,7 +356,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ],
                 border: Border.all(
-                  color: theme.colorScheme.outline.withOpacity(isDark ? 0.3 : 0.5),
+                  color: theme.colorScheme.outline.withOpacity(
+                    isDark ? 0.3 : 0.5,
+                  ),
                   width: 1,
                 ),
               ),
@@ -391,8 +397,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 color: theme.colorScheme.primary.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(Icons.description,
-                  size: 28, color: theme.colorScheme.primary),
+              child: Icon(
+                Icons.description,
+                size: 28,
+                color: theme.colorScheme.primary,
+              ),
             ),
             const SizedBox(width: 12),
             Text(
@@ -419,9 +428,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ? 'Start generating professional invoices'.tr
               : 'Sign in to your account to continue'.tr,
           textAlign: TextAlign.center,
-          style: theme.textTheme.bodyMedium!.copyWith(
-            color: theme.hintColor,
-          ),
+          style: theme.textTheme.bodyMedium!.copyWith(color: theme.hintColor),
         ),
         const SizedBox(height: 32),
         Form(
@@ -475,8 +482,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           return Expanded(
                             child: Container(
                               height: 4,
-                              margin: EdgeInsets.only(
-                                  right: index < 3 ? 4 : 0),
+                              margin: EdgeInsets.only(right: index < 3 ? 4 : 0),
                               decoration: BoxDecoration(
                                 color: strengthColor(ctx, i),
                                 borderRadius: BorderRadius.circular(999),
@@ -496,8 +502,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ],
                   );
                 },
-                toggleShow: () =>
-                    setState(() => showPassword = !showPassword),
+                toggleShow: () => setState(() => showPassword = !showPassword),
               ),
               if (isSignup) ...[
                 const SizedBox(height: 24),
@@ -539,7 +544,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                 color: theme.colorScheme.onPrimary,
                               ),
                             )
-                          : Text(gstVerified ? 'Verified ✓'.tr : 'Live Verify'.tr),
+                          : Text(
+                              gstVerified ? 'Verified ✓'.tr : 'Live Verify'.tr,
+                            ),
                     ),
                   ),
                 ),
@@ -648,7 +655,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               child: _TextField(
                                 label: 'IFSC Code',
                                 hint: 'HDFC0001234',
-                                textCapitalization: TextCapitalization.characters,
+                                textCapitalization:
+                                    TextCapitalization.characters,
                                 initialValue: ifscCode,
                                 onSaved: (v) =>
                                     ifscCode = (v ?? '').toUpperCase(),
@@ -718,6 +726,22 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ],
+              ],
+              if (!isSignup) ...[
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const ForgotPasswordScreen(),
+                        ),
+                      );
+                    },
+                    child: Text('Forgot Password?'.tr),
+                  ),
+                ),
               ],
               const SizedBox(height: 32),
               ElevatedButton(
@@ -908,8 +932,7 @@ class _PasswordField extends StatelessWidget {
             obscureText: !showPassword,
             onChanged: onChanged,
             onSaved: onSaved,
-            validator: (v) =>
-                (v == null || v.isEmpty) ? 'Required' : null,
+            validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
             decoration: InputDecoration(
               hintText: '••••••••',
               suffixIcon: IconButton(

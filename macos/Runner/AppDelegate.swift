@@ -1,5 +1,7 @@
 import Cocoa
 import FlutterMacOS
+import AutoUpdater
+
 
 @main
 class AppDelegate: FlutterAppDelegate {

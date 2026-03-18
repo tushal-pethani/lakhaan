@@ -1,0 +1,73 @@
+name: Build macOS Application
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - app
+
+jobs:
+  build:
+    name: Build macOS App
+    runs-on: macos-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Create firebase_options.dart
+        run: |
+          echo "$FIREBASE_OPTIONS_BASE64" | base64 -d > lib/firebase_options.dart
+        env:
+          FIREBASE_OPTIONS_BASE64: ${{ secrets.FIREBASE_OPTIONS_BASE64 }}
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Extract version from pubspec.yaml
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | sed 's/+.*//')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Detected version: $VERSION"
+
+      - name: Generate appcast.xml
+        run: |
+          chmod +x scripts/generate_appcast.sh
+          ./scripts/generate_appcast.sh
+          echo "Generated appcast.xml"
+          cat appcast.xml
+
+      - name: Build macOS Application
+        run: flutter build macos --release
+
+      - name: Create DMG
+        run: |
+          hdiutil create -volname "Lakhaan" -srcpath build/macos/Build/Products/Release/Lakhaan.app -ov -format UDZO Lakhaan-${{ steps.version.outputs.version }}.dmg
+          ls -la Lakhaan-${{ steps.version.outputs.version }}.dmg
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: Lakhaan v${{ steps.version.outputs.version }}
+          body: |
+            ## Lakhaan v${{ steps.version.outputs.version }}
+
+            ### macOS Desktop Application
+            Download the .dmg file below and drag Lakhaan to Applications folder.
+          files: |
+            Lakhaan-${{ steps.version.outputs.version }}.dmg
+            appcast.xml
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
