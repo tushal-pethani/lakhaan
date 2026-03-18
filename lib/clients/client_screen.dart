@@ -55,7 +55,10 @@ class GstLookupService {
       'https://gst-proxy-three.vercel.app/api/verify-gst';
 
   static Future<Map<String, String>?> fetchGstDetails(String gstNumber) async {
-    final cleanGst = gstNumber.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '');
+    final cleanGst = gstNumber.toUpperCase().replaceAll(
+      RegExp(r'[^A-Z0-9]'),
+      '',
+    );
     if (cleanGst.length != 15) return null;
 
     try {
@@ -145,18 +148,22 @@ class _ClientsScreenState extends State<ClientsScreen> {
     if (!mounted) return;
     setState(() {
       _clients.clear();
-      _clients.addAll(clients.map((c) => Client(
-        id: c['id'] as String,
-        name: c['name'] as String? ?? '',
-        gstNumber: c['gstNumber'] as String? ?? '',
-        panNumber: c['panNumber'] as String? ?? '',
-        address: c['address'] as String? ?? '',
-        city: c['city'] as String? ?? '',
-        state: c['state'] as String? ?? '',
-        pincode: c['pincode'] as String? ?? '',
-        phone: c['phone'] as String? ?? '',
-        email: c['email'] as String? ?? '',
-      )));
+      _clients.addAll(
+        clients.map(
+          (c) => Client(
+            id: c['id'] as String,
+            name: c['name'] as String? ?? '',
+            gstNumber: c['gstNumber'] as String? ?? '',
+            panNumber: c['panNumber'] as String? ?? '',
+            address: c['address'] as String? ?? '',
+            city: c['city'] as String? ?? '',
+            state: c['state'] as String? ?? '',
+            pincode: c['pincode'] as String? ?? '',
+            phone: c['phone'] as String? ?? '',
+            email: c['email'] as String? ?? '',
+          ),
+        ),
+      );
     });
   }
 
@@ -236,8 +243,8 @@ class _ClientsScreenState extends State<ClientsScreen> {
         ? (v) => (v == null || v.isEmpty) ? 'Required' : null
         : null,
     onChanged: onChanged,
-    inputFormatters: label == 'GST Number' || label == 'PAN Number' 
-        ? [UpperCaseTextFormatter()] 
+    inputFormatters: label == 'GST Number' || label == 'PAN Number'
+        ? [UpperCaseTextFormatter()]
         : null,
   );
 
@@ -286,15 +293,22 @@ class _ClientsScreenState extends State<ClientsScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 20,
+                      ),
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9), // Slate 800 or Slate 100
+                        color: isDark
+                            ? const Color(0xFF1E293B)
+                            : const Color(0xFFF1F5F9), // Slate 800 or Slate 100
                         borderRadius: const BorderRadius.vertical(
                           top: Radius.circular(24),
                         ),
                         border: Border(
                           bottom: BorderSide(
-                            color: theme.colorScheme.outlineVariant.withOpacity(0.5),
+                            color: theme.colorScheme.outlineVariant.withOpacity(
+                              0.5,
+                            ),
                           ),
                         ),
                       ),
@@ -437,7 +451,8 @@ class _ClientsScreenState extends State<ClientsScreen> {
                                             Icons.location_city,
                                             city,
                                             (v) => city = v,
-                                            enabled: !isVerified || editing != null,
+                                            enabled:
+                                                !isVerified || editing != null,
                                           ),
                                         ),
                                         const SizedBox(width: 12),
@@ -447,7 +462,8 @@ class _ClientsScreenState extends State<ClientsScreen> {
                                             Icons.map,
                                             state,
                                             (v) => state = v,
-                                            enabled: !isVerified || editing != null,
+                                            enabled:
+                                                !isVerified || editing != null,
                                           ),
                                         ),
                                       ],
@@ -462,7 +478,8 @@ class _ClientsScreenState extends State<ClientsScreen> {
                                             pincode,
                                             (v) => pincode = v,
                                             keyboardType: TextInputType.number,
-                                            enabled: !isVerified || editing != null,
+                                            enabled:
+                                                !isVerified || editing != null,
                                           ),
                                         ),
                                         const SizedBox(width: 12),
@@ -473,7 +490,8 @@ class _ClientsScreenState extends State<ClientsScreen> {
                                             phone,
                                             (v) => phone = v,
                                             keyboardType: TextInputType.phone,
-                                            enabled: !isVerified || editing != null,
+                                            enabled:
+                                                !isVerified || editing != null,
                                           ),
                                         ),
                                       ],
@@ -529,7 +547,8 @@ class _ClientsScreenState extends State<ClientsScreen> {
                                       ),
                                       const SizedBox(height: 8),
                                       Text(
-                                        'We will fetch business details automatically'.tr,
+                                        'We will fetch business details automatically'
+                                            .tr,
                                         style: theme.textTheme.bodySmall!
                                             .copyWith(color: theme.hintColor),
                                         textAlign: TextAlign.center,
@@ -579,19 +598,39 @@ class _ClientsScreenState extends State<ClientsScreen> {
                                                     return;
                                                   }
                                                   // Check for duplicate GST BEFORE making API call
-                                                  final cleanGst = gst.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '');
-                                                  final isDuplicate = _clients.any((c) =>
-                                                    c.gstNumber.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '') == cleanGst &&
-                                                    (editing == null || c.id != editing.id)
+                                                  final cleanGst = gst
+                                                      .toUpperCase()
+                                                      .replaceAll(
+                                                        RegExp(r'[^A-Z0-9]'),
+                                                        '',
+                                                      );
+                                                  final isDuplicate = _clients.any(
+                                                    (c) =>
+                                                        c.gstNumber
+                                                                .toUpperCase()
+                                                                .replaceAll(
+                                                                  RegExp(
+                                                                    r'[^A-Z0-9]',
+                                                                  ),
+                                                                  '',
+                                                                ) ==
+                                                            cleanGst &&
+                                                        (editing == null ||
+                                                            c.id != editing.id),
                                                   );
                                                   if (isDuplicate) {
-                                                    ScaffoldMessenger.of(ctx).showSnackBar(
+                                                    ScaffoldMessenger.of(
+                                                      ctx,
+                                                    ).showSnackBar(
                                                       const SnackBar(
                                                         content: Text(
                                                           'A client with this GST number already exists!',
                                                         ),
-                                                        backgroundColor: Colors.red,
-                                                        behavior: SnackBarBehavior.floating,
+                                                        backgroundColor:
+                                                            Colors.red,
+                                                        behavior:
+                                                            SnackBarBehavior
+                                                                .floating,
                                                       ),
                                                     );
                                                     return; // Don't make API call
@@ -822,7 +861,6 @@ class _ClientsScreenState extends State<ClientsScreen> {
         );
       }
     }
-
   }
 
   void _deleteClient(Client client) {
@@ -843,14 +881,8 @@ class _ClientsScreenState extends State<ClientsScreen> {
         : 'User');
 
     return Scaffold(
-      appBar: Navbar(
-        userName: displayName,
-        onLogout: _onLogout,
-      ),
-      drawer: NavbarDrawer(
-        userName: displayName,
-        onLogout: _onLogout,
-      ),
+      appBar: Navbar(userName: displayName, onLogout: _onLogout),
+      drawer: NavbarDrawer(userName: displayName, onLogout: _onLogout),
       body: Container(
         color: theme.colorScheme.surface,
         child: Center(
@@ -902,7 +934,8 @@ class _ClientsScreenState extends State<ClientsScreen> {
                                 Container(
                                   padding: const EdgeInsets.all(24),
                                   decoration: BoxDecoration(
-                                    color: theme.colorScheme.primary.withOpacity(0.05),
+                                    color: theme.colorScheme.primary
+                                        .withOpacity(0.05),
                                     shape: BoxShape.circle,
                                   ),
                                   child: Icon(
@@ -938,19 +971,7 @@ class _ClientsScreenState extends State<ClientsScreen> {
                             ),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(12),
-                              child: LayoutBuilder(
-                                builder: (ctx, constraints) {
-                                  return SingleChildScrollView(
-                                    scrollDirection: Axis.horizontal,
-                                    child: ConstrainedBox(
-                                      constraints: BoxConstraints(
-                                        minWidth: constraints.maxWidth,
-                                      ),
-                                      child: _buildClientTable(context, _clients),
-                                    ),
-                                  );
-                                },
-                              ),
+                              child: _buildClientTable(context, _clients),
                             ),
                           ),
                   ),
@@ -973,14 +994,14 @@ class _ClientsScreenState extends State<ClientsScreen> {
           headingRowColor: MaterialStateProperty.all(
             isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
           ),
-          dataRowColor: MaterialStateProperty.resolveWith<Color?>(
-            (Set<MaterialState> states) {
-              if (states.contains(MaterialState.hovered)) {
-                return theme.colorScheme.primary.withOpacity(isDark ? 0.1 : 0.04);
-              }
-              return null;
-            },
-          ),
+          dataRowColor: MaterialStateProperty.resolveWith<Color?>((
+            Set<MaterialState> states,
+          ) {
+            if (states.contains(MaterialState.hovered)) {
+              return theme.colorScheme.primary.withOpacity(isDark ? 0.1 : 0.04);
+            }
+            return null;
+          }),
           dividerThickness: 1,
           headingTextStyle: theme.textTheme.titleSmall!.copyWith(
             fontWeight: FontWeight.w600,
@@ -999,12 +1020,10 @@ class _ClientsScreenState extends State<ClientsScreen> {
         dataRowMaxHeight: 72,
         columns: const [
           DataColumn(label: Text('Client')),
-          DataColumn(label: Text('Contact Details')),
+          DataColumn(label: Text('Phone')),
           DataColumn(label: Text('Location')),
-          DataColumn(label: Text('Tax Info')),
-          DataColumn(
-            label: Align(alignment: Alignment.centerRight, child: Text('Actions')),
-          ),
+          DataColumn(label: Text('Tax')),
+          DataColumn(label: Text('Actions')),
         ],
         rows: clients.map((client) {
           return DataRow(
@@ -1017,12 +1036,14 @@ class _ClientsScreenState extends State<ClientsScreen> {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withOpacity(0.1),
+                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       alignment: Alignment.center,
                       child: Text(
-                        client.name.isNotEmpty ? client.name[0].toUpperCase() : '?',
+                        client.name.isNotEmpty
+                            ? client.name[0].toUpperCase()
+                            : '?',
                         style: TextStyle(
                           color: theme.colorScheme.primary,
                           fontWeight: FontWeight.bold,
@@ -1031,91 +1052,96 @@ class _ClientsScreenState extends State<ClientsScreen> {
                       ),
                     ),
                     const SizedBox(width: 16),
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          client.name,
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        if (client.email.isNotEmpty)
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                           Text(
-                            client.email,
-                            style: TextStyle(color: theme.hintColor, fontSize: 13),
+                            client.name,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                            overflow: TextOverflow.ellipsis,
                           ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              DataCell(
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(client.phone.isNotEmpty ? client.phone : 'No Phone'),
-                    if (client.email.isNotEmpty)
-                      Text(
-                        'Primary Contact',
-                        style: TextStyle(color: theme.hintColor, fontSize: 12),
-                      ),
-                  ],
-                ),
-              ),
-              DataCell(
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('${client.city}, ${client.state}'),
-                    Text(
-                      client.pincode,
-                      style: TextStyle(color: theme.hintColor, fontSize: 13),
-                    ),
-                  ],
-                ),
-              ),
-              DataCell(
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      client.gstNumber,
-                      style: const TextStyle(
-                        fontFamily: 'monospace',
-                        fontWeight: FontWeight.w500,
+                          if (client.email.isNotEmpty)
+                            Text(
+                              client.email,
+                              style: TextStyle(
+                                color: theme.hintColor,
+                                fontSize: 13,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                        ],
                       ),
                     ),
-                    if (client.panNumber?.isNotEmpty == true)
-                      Text(
-                        'PAN: ${client.panNumber}',
-                        style: TextStyle(color: theme.hintColor, fontSize: 12),
-                      ),
                   ],
                 ),
               ),
               DataCell(
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      IconButton(
-                        tooltip: 'Edit Client',
-                        icon: const Icon(Icons.edit_outlined, size: 20),
-                        color: theme.hintColor,
-                        onPressed: () => _openClientForm(editing: client),
-                      ),
-                      IconButton(
-                        tooltip: 'Delete Client',
-                        icon: const Icon(Icons.delete_outline, size: 20),
-                        color: theme.colorScheme.error,
-                        onPressed: () => _deleteClient(client),
+                      Text(client.phone.isNotEmpty ? client.phone : '-'),
+                      if (client.email.isNotEmpty)
+                        Text(
+                          'Primary Contact',
+                          style: TextStyle(
+                            color: theme.hintColor,
+                            fontSize: 12,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              DataCell(
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('${client.city}, ${client.state}'),
+                      Text(
+                        client.pincode,
+                        style: TextStyle(color: theme.hintColor, fontSize: 13),
                       ),
                     ],
                   ),
+                ),
+              ),
+              DataCell(
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        client.gstNumber,
+                        style: const TextStyle(
+                          fontFamily: 'monospace',
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      if (client.panNumber?.isNotEmpty == true)
+                        Text(
+                          'PAN: ${client.panNumber}',
+                          style: TextStyle(
+                            color: theme.hintColor,
+                            fontSize: 12,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              DataCell(
+                IconButton(
+                  tooltip: 'Edit Client',
+                  icon: const Icon(Icons.edit_outlined, size: 20),
+                  color: theme.hintColor,
+                  onPressed: () => _openClientForm(editing: client),
                 ),
               ),
             ],

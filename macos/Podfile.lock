@@ -1188,6 +1188,9 @@ PODS:
     - abseil/meta/type_traits
     - abseil/xcprivacy
   - abseil/xcprivacy (1.20240722.0)
+  - auto_updater_macos (0.0.1):
+    - FlutterMacOS
+    - Sparkle
   - BoringSSL-GRPC (0.0.37):
     - BoringSSL-GRPC/Implementation (= 0.0.37)
     - BoringSSL-GRPC/Interface (= 0.0.37)
@@ -1401,12 +1404,14 @@ PODS:
     - FlutterMacOS
   - screen_retriever_macos (0.0.1):
     - FlutterMacOS
+  - Sparkle (2.9.0)
   - url_launcher_macos (0.0.1):
     - FlutterMacOS
   - window_manager (0.5.0):
     - FlutterMacOS
 
 DEPENDENCIES:
+  - auto_updater_macos (from `Flutter/ephemeral/.symlinks/plugins/auto_updater_macos/macos`)
   - cloud_firestore (from `Flutter/ephemeral/.symlinks/plugins/cloud_firestore/macos`)
   - cloud_functions (from `Flutter/ephemeral/.symlinks/plugins/cloud_functions/macos`)
   - file_picker (from `Flutter/ephemeral/.symlinks/plugins/file_picker/macos`)
@@ -1441,8 +1446,11 @@ SPEC REPOS:
     - GTMSessionFetcher
     - leveldb-library
     - nanopb
+    - Sparkle
 
 EXTERNAL SOURCES:
+  auto_updater_macos:
+    :path: Flutter/ephemeral/.symlinks/plugins/auto_updater_macos/macos
   cloud_firestore:
     :path: Flutter/ephemeral/.symlinks/plugins/cloud_firestore/macos
   cloud_functions:
@@ -1468,6 +1476,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   abseil: a05cc83bf02079535e17169a73c5be5ba47f714b
+  auto_updater_macos: 3a42f1a06be6981f1a18be37e6e7bf86aa732118
   BoringSSL-GRPC: dded2a44897e45f28f08ae87a55ee4bcd19bc508
   cloud_firestore: 5d6c1cb7f6c050f66708f7c9cc1afee568a67713
   cloud_functions: fde9a5ab81f1a84b0ace89bcf5fd5c3e7edc49fe
@@ -1496,6 +1505,7 @@ SPEC CHECKSUMS:
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
   printing: c4cf83c78fd684f9bc318e6aadc18972aa48f617
   screen_retriever_macos: 452e51764a9e1cdb74b3c541238795849f21557f
+  Sparkle: f4355f9ebbe9b7d932df4980d70f13922ac97b2a
   url_launcher_macos: f87a979182d112f911de6820aefddaf56ee9fbfd
   window_manager: b729e31d38fb04905235df9ea896128991cad99e
 

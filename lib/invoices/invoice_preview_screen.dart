@@ -8,10 +8,7 @@ import 'package:printing/printing.dart';
 import 'invoice_theme_renderer.dart';
 
 class InvoicePreviewScreen extends StatefulWidget {
-  const InvoicePreviewScreen({
-    super.key,
-    required this.data,
-  });
+  const InvoicePreviewScreen({super.key, required this.data});
 
   final InvoicePrintData data;
 
@@ -23,25 +20,47 @@ class _InvoicePreviewScreenState extends State<InvoicePreviewScreen> {
   double _zoom = 1.0;
 
   Future<void> _downloadPdf(BuildContext context) async {
-    final pdfBytes = await InvoiceThemeRenderer.buildPdf(widget.data);
-    final filename = 'invoice-${widget.data.billNo}.pdf';
+    try {
+      final pdfBytes = await InvoiceThemeRenderer.buildPdf(widget.data);
+      final filename = 'invoice-${widget.data.billNo}.pdf';
 
-    if (kIsWeb) {
-      await Printing.sharePdf(bytes: pdfBytes, filename: filename);
-      return;
+      if (kIsWeb) {
+        await Printing.sharePdf(bytes: pdfBytes, filename: filename);
+        return;
+      }
+
+      final outputPath = await FilePicker.platform.saveFile(
+        dialogTitle: 'Save Invoice',
+        fileName: filename,
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+      );
+
+      if (outputPath == null) return;
+
+      final file = File(outputPath);
+      await file.writeAsBytes(pdfBytes, flush: true);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Invoice saved to: $outputPath'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('PDF download error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to download PDF: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
-
-    final outputPath = await FilePicker.platform.saveFile(
-      dialogTitle: 'Save Invoice',
-      fileName: filename,
-      type: FileType.custom,
-      allowedExtensions: ['pdf'],
-    );
-
-    if (outputPath == null) return;
-
-    final file = File(outputPath);
-    await file.writeAsBytes(pdfBytes, flush: true);
   }
 
   void _zoomIn() {
@@ -97,4 +116,3 @@ class _InvoicePreviewScreenState extends State<InvoicePreviewScreen> {
     );
   }
 }
-

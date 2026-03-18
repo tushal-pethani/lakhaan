@@ -1,7 +1,9 @@
 import 'dart:typed_data';
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 class InvoicePrintItem {
   final String description;
@@ -314,10 +316,14 @@ class InvoiceThemeRenderer {
                     fontSize: 18,
                   ),
                 ),
-                if (data.company.address.isNotEmpty || data.company.city.isNotEmpty) ...[
+                if (data.company.address.isNotEmpty ||
+                    data.company.city.isNotEmpty) ...[
                   pw.SizedBox(height: 4),
                   pw.Text(
-                    [data.company.address, data.company.city].where((s) => s.isNotEmpty).join(', '),
+                    [
+                      data.company.address,
+                      data.company.city,
+                    ].where((s) => s.isNotEmpty).join(', '),
                     style: pw.TextStyle(
                       color: themeColors.headerText,
                       fontSize: 10,
@@ -368,7 +374,8 @@ class InvoiceThemeRenderer {
     InvoicePrintData data,
     _ThemeColors themeColors,
   ) {
-    final hasHsn = data.company.hsnNumber != null && data.company.hsnNumber!.isNotEmpty;
+    final hasHsn =
+        data.company.hsnNumber != null && data.company.hsnNumber!.isNotEmpty;
     return pw.Table(
       columnWidths: {
         0: const pw.FixedColumnWidth(30),
@@ -778,9 +785,15 @@ class InvoiceThemeRenderer {
                     style: const pw.TextStyle(fontSize: 9),
                   ),
                 ],
-                if (data.client.city.isNotEmpty || data.client.state.isNotEmpty || data.client.pincode.isNotEmpty)
+                if (data.client.city.isNotEmpty ||
+                    data.client.state.isNotEmpty ||
+                    data.client.pincode.isNotEmpty)
                   pw.Text(
-                    [data.client.city, data.client.state, data.client.pincode].where((s) => s.isNotEmpty).join(', '),
+                    [
+                      data.client.city,
+                      data.client.state,
+                      data.client.pincode,
+                    ].where((s) => s.isNotEmpty).join(', '),
                     style: const pw.TextStyle(fontSize: 9),
                   ),
                 if (data.client.gstNumber.isNotEmpty) ...[
@@ -967,8 +980,17 @@ class InvoiceThemeRenderer {
   }
 
   static Future<Uint8List> buildPdf(InvoicePrintData data) async {
-    final pdf = pw.Document();
     final themeColors = _themes[data.theme] ?? _themes['classic']!;
+    final fallbackFont = await PdfGoogleFonts.notoSansRegular();
+
+    final pdf = pw.Document();
+
+    pw.Font? resolvedFont;
+    try {
+      resolvedFont = fallbackFont;
+    } catch (e) {
+      debugPrint('Font loading issue: $e');
+    }
 
     pdf.addPage(
       pw.Page(
