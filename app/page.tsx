@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useTheme } from '@/components/ThemeProvider';
-import { db } from '@/lib/firebase';
+import { db, isFirebaseConfigured } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 const GITHUB_API_URL = 'https://api.github.com/repos/tushal-pethani/lakhaan/releases/latest';
@@ -94,7 +94,7 @@ export default function HomePage() {
     setSubmitStatus('idle');
 
     try {
-      if (typeof window !== 'undefined' && db) {
+      if (typeof window !== 'undefined' && isFirebaseConfigured && db) {
         await addDoc(collection(db, 'contacts'), {
           name: formData.name || null,
           email: formData.email || null,
@@ -102,9 +102,11 @@ export default function HomePage() {
           type: formData.type,
           createdAt: serverTimestamp(),
         });
+        setSubmitStatus('success');
+        setFormData({ name: '', email: '', message: '', type: 'query' });
+      } else {
+        setSubmitStatus('error');
       }
-      setSubmitStatus('success');
-      setFormData({ name: '', email: '', message: '', type: 'query' });
     } catch (error) {
       console.error('Error submitting form:', error);
       setSubmitStatus('error');
